@@ -1,0 +1,30 @@
+.simple-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at top, #fef9c3, #f1f5f9 50%, #e2e8f0);
+  color: #0f172a;
+}
+
+.simple-card {
+  background: #ffffff;
+  padding: 36px 44px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+}
+
+.simple-card h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.simple-link {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  text-decoration: none;
+}
