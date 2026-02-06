@@ -1,0 +1,32 @@
+.impact-page { max-width: 1000px; }
+.impact-loading { padding: 40px; text-align: center; color: #6b7280; }
+.impact-header { margin-bottom: 24px; }
+.impact-header h1 { display: flex; align-items: center; gap: 8px; font-size: 1.4rem; color: #111827; margin: 0; }
+.impact-header p { color: #6b7280; font-size: 0.9rem; margin: 4px 0 0; }
+
+.impact-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.impact-stat-card { background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.impact-stat-card svg { margin-bottom: 8px; }
+.impact-stat-value { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+.impact-stat-label { font-size: 0.85rem; color: #6b7280; }
+.impact-stat-green { color: #10b981; }
+.impact-stat-blue { color: #3b82f6; }
+.impact-stat-emerald { color: #059669; }
+.impact-stat-cyan { color: #06b6d4; }
+
+.impact-comparison { background: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.impact-comparison h2 { font-size: 1.05rem; color: #111827; margin: 0 0 16px; }
+.impact-compare-grid { display: flex; flex-direction: column; gap: 14px; }
+.compare-bar-item {}
+.compare-bar-info { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.compare-bar-label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.compare-bar-values { font-size: 0.8rem; color: #6b7280; }
+.compare-bar-track { height: 10px; background: #f3f4f6; border-radius: 5px; overflow: hidden; }
+.compare-bar-fill { height: 100%; background: linear-gradient(to right, #10b981, #34d399); border-radius: 5px; transition: width 0.8s ease; }
+
+.impact-facts { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.impact-facts h2 { font-size: 1.05rem; color: #111827; margin: 0 0 16px; }
+.impact-facts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.impact-fact-card { background: #f9fafb; border-radius: 10px; padding: 16px; text-align: center; }
+.impact-fact-card strong { display: block; font-size: 1.5rem; color: #10b981; margin-bottom: 4px; }
+.impact-fact-card span { font-size: 0.82rem; color: #6b7280; }

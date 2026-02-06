@@ -155,6 +155,32 @@
   margin-top: 1rem;
 }
 
+.map-picker {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  height: 280px;
+}
+
+.leaflet-map {
+  height: 100%;
+  width: 100%;
+}
+
+.map-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.map-fallback {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.6);
+}
+
 .image-preview {
   position: relative;
   border-radius: 0.75rem;
@@ -252,4 +278,3 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-

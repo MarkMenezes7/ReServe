@@ -12,13 +12,13 @@ import {
   Clock,
   LogOut,
   Search,
-  Filter,
   Grid,
   List,
   Sparkles,
-  Menu,
-  X,
-} from 'lucide-react';
+    Menu,
+    X,
+    MessageCircle,
+  } from 'lucide-react';
 import './NGODashboard.css';
 
 interface Stats {
@@ -89,21 +89,29 @@ const NGODashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       // Fetch stats
-      const statsRes = await fetch(`http://localhost:5000/api/ngo/stats/${userId}`);
-      const statsData = await statsRes.json();
-      setStats(statsData);
+      const statsRes = await fetch(`http://localhost:5000/api/ngo/stats/${userId}`, { headers });
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData);
+      }
 
       // Fetch available listings
-      const listingsRes = await fetch('http://localhost:5000/api/ngo/listings');
-      const listingsData = await listingsRes.json();
-      setListings(listingsData);
+      const listingsRes = await fetch('http://localhost:5000/api/ngo/listings', { headers });
+      if (listingsRes.ok) {
+        const listingsData = await listingsRes.json();
+        setListings(listingsData);
+      }
 
       // Fetch claims
-      const claimsRes = await fetch(`http://localhost:5000/api/ngo/claims/${userId}`);
-      const claimsData = await claimsRes.json();
-      setClaims(claimsData);
+      const claimsRes = await fetch(`http://localhost:5000/api/ngo/claims/${userId}`, { headers });
+      if (claimsRes.ok) {
+        const claimsData = await claimsRes.json();
+        setClaims(claimsData);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -115,11 +123,13 @@ const NGODashboard = () => {
   const handleClaim = async (listingId: number) => {
     try {
       const scheduledTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours from now
-      
+      const token = localStorage.getItem('token');
+
       const response = await fetch('http://localhost:5000/api/ngo/claim', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           listingId,
@@ -149,10 +159,12 @@ const NGODashboard = () => {
 
   const handleMarkCollected = async (claimId: number) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5000/api/claims/${claimId}/collect`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
       });
 
@@ -247,6 +259,20 @@ const NGODashboard = () => {
           >
             <Sparkles className="nav-icon" />
             <span>ML Forecast</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/ngo/map')}
+          >
+            <MapPin className="nav-icon" />
+            <span>Map View</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/chat')}
+          >
+            <MessageCircle className="nav-icon" />
+            <span>Chat</span>
           </button>
         </nav>
 
@@ -490,7 +516,9 @@ const NGODashboard = () => {
                       </div>
 
                       <div className="claim-actions">
-                        <button className="btn-secondary">Contact Donor</button>
+                        <button className="btn-secondary" onClick={() => navigate('/chat')}>
+                          Contact Donor
+                        </button>
                         <button
                           className="btn-primary"
                           onClick={() => handleMarkCollected(claim.id)}

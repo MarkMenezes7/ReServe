@@ -17,6 +17,7 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react';
 import './DonorDashboard.css';
 import { Claim, DonorStats, Listing } from '../../types';
@@ -51,21 +52,29 @@ const DonorDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       // Fetch stats
-      const statsRes = await fetch(`http://localhost:5000/api/donor/stats/${userId}`);
-      const statsData = await statsRes.json();
-      setStats(statsData);
+      const statsRes = await fetch(`http://localhost:5000/api/donor/stats/${userId}`, { headers });
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData);
+      }
 
       // Fetch listings
-      const listingsRes = await fetch(`http://localhost:5000/api/donor/listings/${userId}?status=${filterStatus}`);
-      const listingsData = await listingsRes.json();
-      setListings(listingsData);
+      const listingsRes = await fetch(`http://localhost:5000/api/donor/listings/${userId}?status=${filterStatus}`, { headers });
+      if (listingsRes.ok) {
+        const listingsData = await listingsRes.json();
+        setListings(listingsData);
+      }
 
       // Fetch claims on donor listings
-      const claimsRes = await fetch(`http://localhost:5000/api/donor/claims/${userId}`);
-      const claimsData = await claimsRes.json();
-      setClaims(claimsData);
+      const claimsRes = await fetch(`http://localhost:5000/api/donor/claims/${userId}`, { headers });
+      if (claimsRes.ok) {
+        const claimsData = await claimsRes.json();
+        setClaims(claimsData);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -87,10 +96,12 @@ const DonorDashboard = () => {
 
   const handleMarkCollected = async (claimId: number) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5000/api/claims/${claimId}/collect`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
       });
 
@@ -189,6 +200,13 @@ const DonorDashboard = () => {
           >
             <Calendar className="nav-icon" />
             <span>Claims</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/chat')}
+          >
+            <MessageCircle className="nav-icon" />
+            <span>Chat</span>
           </button>
         </nav>
 
@@ -461,7 +479,9 @@ const DonorDashboard = () => {
                       </div>
 
                       <div className="claim-actions">
-                        <button className="btn-secondary">Contact NGO</button>
+                        <button className="btn-secondary" onClick={() => navigate('/chat')}>
+                          Contact NGO
+                        </button>
                         <button
                           className="btn-primary"
                           onClick={() => handleMarkCollected(claim.id)}

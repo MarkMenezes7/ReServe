@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import L from 'leaflet';
 import {
   ArrowLeft,
   ArrowRight,
@@ -8,7 +9,6 @@ import {
   Upload,
   X,
   MapPin,
-  Calendar,
   Package,
   Info,
   Clock,
@@ -58,13 +58,29 @@ const AddListingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
   const userId = localStorage.getItem('userId');
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
+
+  const defaultCenter: [number, number] = [28.6139, 77.209];
 
   useEffect(() => {
     if (!localStorage.getItem('isAuthenticated')) {
       navigate('/login');
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (currentStep === 3) {
+      // Allow layout to settle before mounting Leaflet
+      const timer = setTimeout(() => setMapReady(true), 0);
+      return () => clearTimeout(timer);
+    }
+    setMapReady(false);
+  }, [currentStep]);
 
   const [formData, setFormData] = useState<ListingData>({
     foodName: '',
@@ -174,10 +190,12 @@ const AddListingPage = () => {
         return;
       }
       
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/donor/listings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           ...formData,
@@ -228,6 +246,103 @@ const AddListingPage = () => {
     '6:00 PM - 9:00 PM',
     '9:00 PM - 12:00 AM',
   ];
+
+  class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+    constructor(props: { children: React.ReactNode }) {
+      super(props);
+      this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError() {
+      return { hasError: true };
+    }
+
+    render() {
+      if (this.state.hasError) {
+        return (
+          <div className="map-fallback">
+            Map failed to load. Please refresh or try again.
+          </div>
+        );
+      }
+      return this.props.children;
+    }
+  }
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData(prev => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+        if (leafletMapRef.current) {
+          leafletMapRef.current.setView([position.coords.latitude, position.coords.longitude], 13);
+        }
+      },
+      () => {
+        alert('Unable to retrieve your location. Please allow location access.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+
+    if (!leafletMapRef.current) {
+      try {
+        if ((mapRef.current as any)._leaflet_id) {
+          delete (mapRef.current as any)._leaflet_id;
+        }
+        const mapInstance = L.map(mapRef.current).setView(defaultCenter, 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(mapInstance);
+
+        mapInstance.on('click', (e: L.LeafletMouseEvent) => {
+          setFormData(prev => ({
+            ...prev,
+            latitude: e.latlng.lat,
+            longitude: e.latlng.lng,
+          }));
+        });
+
+        leafletMapRef.current = mapInstance;
+        setTimeout(() => mapInstance.invalidateSize(), 0);
+      } catch (error: any) {
+        console.error('Leaflet init error:', error);
+        setMapError('Map failed to initialize. Please refresh.');
+      }
+    }
+
+    return () => {
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+      }
+    };
+  }, [mapReady]);
+
+  useEffect(() => {
+    if (!leafletMapRef.current) return;
+    if (formData.latitude === 0 || formData.longitude === 0) return;
+
+    if (markerRef.current) {
+      markerRef.current.setLatLng([formData.latitude, formData.longitude]);
+    } else {
+      markerRef.current = L.circleMarker([formData.latitude, formData.longitude], {
+        radius: 8,
+        color: '#22c55e',
+      }).addTo(leafletMapRef.current);
+    }
+  }, [formData.latitude, formData.longitude]);
 
   return (
     <div className="add-listing-page">
@@ -507,6 +622,29 @@ const AddListingPage = () => {
                       placeholder="Full address with building/floor details"
                       required
                     />
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Pickup Map Location (click to set marker)</label>
+                    <div className="map-picker">
+                      {mapReady ? (
+                        <MapErrorBoundary>
+                          <div ref={mapRef} className="leaflet-map">
+                            {mapError && <div className="map-fallback">{mapError}</div>}
+                          </div>
+                        </MapErrorBoundary>
+                      ) : (
+                        <div className="map-fallback">Loading map...</div>
+                      )}
+                    </div>
+                    <div className="map-actions">
+                      <button type="button" className="btn-secondary" onClick={handleUseMyLocation}>
+                        Use My Location
+                      </button>
+                    </div>
+                    <small className="hint">
+                      Selected: {formData.latitude && formData.longitude ? `${formData.latitude.toFixed(5)}, ${formData.longitude.toFixed(5)}` : 'None'}
+                    </small>
                   </div>
 
                   <div className="form-group full-width">

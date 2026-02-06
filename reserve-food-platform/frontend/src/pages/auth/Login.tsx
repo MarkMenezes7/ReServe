@@ -25,24 +25,6 @@ const Login = () => {
     setError('');
 
     try {
-      // Hardcoded admin check
-      if (formData.email === 'admin' && formData.password === 'admin123') {
-        console.log('Admin login successful!');
-
-        // Store admin session
-        localStorage.setItem('userType', 'admin');
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userName', 'Admin');
-        localStorage.setItem('userEmail', 'admin');
-
-        // Redirect to admin dashboard
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 500);
-        return;
-      }
-
-      // Regular user login - API call
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
@@ -63,12 +45,13 @@ const Login = () => {
       // Store user data and token
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('userType', data.user.userType);
-      localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('userId', data.user.id.toString());
       localStorage.setItem('userName', data.user.name);
       localStorage.setItem('userEmail', data.user.email);
       localStorage.setItem('token', data.token);
-
-      console.log('Login successful:', data.user);
+      if (data.user.organizationName) {
+        localStorage.setItem('organizationName', data.user.organizationName);
+      }
 
       // Redirect based on user type
       setTimeout(() => {
@@ -208,7 +191,7 @@ const Login = () => {
             {/* Admin Login Hint */}
             <div className="admin-hint">
               <small>
-                💡 <strong>Admin Login:</strong> email = <code>admin</code> / password = <code>admin123</code>
+                Admin: <code>admin@reserve.org</code> / <code>admin123</code>
               </small>
             </div>
 

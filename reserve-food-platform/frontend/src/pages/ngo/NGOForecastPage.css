@@ -1,0 +1,40 @@
+.forecast-page { max-width: 1100px; }
+.forecast-loading { padding: 40px; text-align: center; color: #6b7280; }
+.forecast-header { margin-bottom: 24px; }
+.forecast-header h1 { display: flex; align-items: center; gap: 8px; font-size: 1.4rem; color: #111827; margin: 0; }
+.forecast-header p { color: #6b7280; font-size: 0.9rem; margin: 4px 0 0; }
+
+.forecast-section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.forecast-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.forecast-section-header h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; color: #111827; margin: 0; }
+
+.source-badge { font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+.source-ml { background: #ecfdf5; color: #10b981; }
+.source-fallback { background: #fef3c7; color: #d97706; }
+.source-database { background: #eff6ff; color: #3b82f6; }
+
+.forecast-chart { display: flex; align-items: flex-end; gap: 4px; height: 200px; padding-top: 10px; overflow-x: auto; }
+.forecast-bar-item { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 32px; }
+.forecast-bar-container { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.forecast-bar { width: 70%; min-height: 4px; border-radius: 4px 4px 0 0; position: relative; transition: height 0.5s; }
+.confidence-high { background: linear-gradient(to top, #10b981, #34d399); }
+.confidence-medium { background: linear-gradient(to top, #f59e0b, #fbbf24); }
+.confidence-low { background: linear-gradient(to top, #6b7280, #9ca3af); }
+.forecast-bar-value { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: #6b7280; white-space: nowrap; }
+.forecast-bar-label { font-size: 0.65rem; color: #9ca3af; margin-top: 4px; }
+
+.forecast-weekly-chart { display: flex; flex-direction: column; gap: 12px; }
+.weekly-bar-item { display: flex; flex-direction: column; gap: 4px; }
+.weekly-bar-info { display: flex; align-items: center; gap: 12px; }
+.weekly-day { font-weight: 600; font-size: 0.88rem; color: #111827; min-width: 90px; }
+.weekly-prob { font-size: 0.8rem; color: #10b981; font-weight: 500; }
+.weekly-qty { font-size: 0.78rem; color: #6b7280; }
+.weekly-bar-track { height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.weekly-bar-fill { height: 100%; background: linear-gradient(to right, #10b981, #34d399); border-radius: 4px; transition: width 0.5s; }
+
+.peak-hours-chart { display: flex; flex-direction: column; gap: 8px; }
+.peak-hour-item { display: flex; align-items: center; gap: 10px; }
+.peak-hour-label { font-size: 0.82rem; color: #374151; min-width: 50px; font-weight: 500; }
+.peak-hour-track { flex: 1; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.peak-hour-fill { height: 100%; background: linear-gradient(to right, #6366f1, #818cf8); border-radius: 4px; transition: width 0.5s; }
+.peak-hour-count { font-size: 0.8rem; color: #6b7280; min-width: 30px; text-align: right; }

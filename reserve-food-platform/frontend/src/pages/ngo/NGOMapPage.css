@@ -1,0 +1,252 @@
+.ngo-map-page {
+  min-height: 100vh;
+  padding: 2rem;
+  color: #e2e8f0;
+  background: linear-gradient(120deg, #020617, #0f172a 40%, #1e293b);
+}
+
+.map-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.map-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.map-header p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.map-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.map-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.toolbar-btn-active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-loading {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  animation: pulse 1.5s infinite;
+}
+
+.temporal-slider {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.temporal-slider label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #3b82f6;
+}
+
+.slider-input {
+  width: 100%;
+  accent-color: #3b82f6;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.legend-panel {
+  display: flex;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.map-content {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+}
+
+.map-sidebar {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  height: calc(100vh - 320px);
+  overflow-y: auto;
+}
+
+.map-sidebar h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.map-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.map-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.map-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.map-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.map-card p {
+  margin: 2px 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.map-card small {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.map-panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 1rem;
+  min-height: 480px;
+}
+
+.leaflet-map {
+  height: 100%;
+  min-height: 480px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.map-empty {
+  color: #94a3b8;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.map-placeholder {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 0.75rem;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.map-fallback {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 0.75rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (max-width: 900px) {
+  .map-content {
+    grid-template-columns: 1fr;
+  }
+  .map-sidebar {
+    height: auto;
+  }
+  .map-toolbar {
+    overflow-x: auto;
+  }
+}

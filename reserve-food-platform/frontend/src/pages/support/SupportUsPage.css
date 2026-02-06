@@ -1,0 +1,1051 @@
+/* =================================================================
+   SupportUsPage.css - Dark gradient theme for Support / Funding page
+   ================================================================= */
+
+/* -------------------- Page Container -------------------- */
+.su-page {
+  position: relative;
+  overflow-x: hidden;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 35%, #064e3b 100%);
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* -------------------- Background Orbs -------------------- */
+.su-bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.su-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(100px);
+}
+
+.su-orb-1 {
+  top: -8rem;
+  right: -8rem;
+  width: 22rem;
+  height: 22rem;
+  background: rgba(34, 197, 94, 0.18);
+}
+
+.su-orb-2 {
+  top: 45%;
+  left: -10rem;
+  width: 26rem;
+  height: 26rem;
+  background: rgba(16, 185, 129, 0.14);
+}
+
+.su-orb-3 {
+  bottom: -6rem;
+  right: 30%;
+  width: 20rem;
+  height: 20rem;
+  background: rgba(20, 184, 166, 0.12);
+}
+
+/* -------------------- Navbar -------------------- */
+.su-navbar {
+  position: relative;
+  z-index: 50;
+  padding: 1.25rem 1.5rem;
+}
+
+.su-navbar-inner {
+  max-width: 76rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.su-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.su-logo-icon-wrap {
+  position: relative;
+}
+
+.su-logo-glow {
+  position: absolute;
+  inset: 0;
+  background: rgb(34, 197, 94);
+  filter: blur(18px);
+  opacity: 0.45;
+}
+
+.su-logo-icon {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: rgb(74, 222, 128);
+}
+
+.su-logo-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #4ade80, #34d399, #2dd4bf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.su-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.su-btn-login {
+  padding: 0.5rem 1.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d1d5db;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.su-btn-login:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* -------------------- HERO -------------------- */
+.su-hero {
+  position: relative;
+  z-index: 10;
+  padding: 6rem 1.5rem 5rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .su-hero {
+    padding-top: 8rem;
+    padding-bottom: 6rem;
+  }
+}
+
+.su-hero-inner {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.su-hero-badge-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+}
+
+.su-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  color: #4ade80;
+  font-weight: 500;
+}
+
+.su-hero-badge-icon {
+  color: #4ade80;
+}
+
+.su-hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .su-hero-title {
+    font-size: 4.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .su-hero-title {
+    font-size: 5.5rem;
+  }
+}
+
+.su-hero-line1 {
+  display: block;
+  color: #fff;
+}
+
+.su-hero-line2 {
+  display: block;
+  background: linear-gradient(to right, #4ade80, #34d399, #2dd4bf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.su-hero-subtitle {
+  font-size: 1.15rem;
+  color: #9ca3af;
+  line-height: 1.75;
+  max-width: 42rem;
+  margin: 0 auto 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .su-hero-subtitle {
+    font-size: 1.3rem;
+  }
+}
+
+.su-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 2rem;
+  background: linear-gradient(135deg, #22c55e, #059669);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 12px 30px -8px rgba(34, 197, 94, 0.4);
+  transition: box-shadow 0.3s;
+}
+
+.su-hero-cta:hover {
+  box-shadow: 0 16px 40px -8px rgba(34, 197, 94, 0.55);
+}
+
+/* -------------------- SECTION UTILITIES -------------------- */
+.su-section-inner {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.su-section-header {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.su-section-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .su-section-title {
+    font-size: 2.75rem;
+  }
+}
+
+.su-section-subtitle {
+  font-size: 1.1rem;
+  color: #9ca3af;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+/* -------------------- 2. IMPACT STATS -------------------- */
+.su-stats-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(4px);
+}
+
+.su-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .su-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .su-stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.su-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  cursor: default;
+  transition: border-color 0.3s;
+}
+
+.su-stat-card:hover {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.su-stat-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: #4ade80;
+  margin-bottom: 0.25rem;
+}
+
+.su-stat-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #4ade80, #34d399);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.su-stat-label {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+/* -------------------- 3. DONATION TIERS -------------------- */
+.su-tiers-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+}
+
+.su-tiers-grid {
+  display: grid;
+  gap: 1.75rem;
+}
+
+@media (min-width: 640px) {
+  .su-tiers-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .su-tiers-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.su-tier-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem 1.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.su-tier-card:hover {
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 12px 40px -10px rgba(34, 197, 94, 0.15);
+}
+
+.su-tier-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.su-tier-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.4rem;
+}
+
+.su-tier-amount {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #4ade80;
+  margin-bottom: 0.75rem;
+}
+
+.su-tier-dollar {
+  font-size: 1.25rem;
+  vertical-align: super;
+  margin-right: 2px;
+}
+
+.su-tier-desc {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+  flex: 1;
+}
+
+.su-tier-btn {
+  width: 100%;
+  padding: 0.7rem 1.25rem;
+  background: linear-gradient(135deg, #22c55e, #059669);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px -4px rgba(34, 197, 94, 0.35);
+  transition: box-shadow 0.3s;
+}
+
+.su-tier-btn:hover {
+  box-shadow: 0 8px 28px -4px rgba(34, 197, 94, 0.5);
+}
+
+/* -------------------- 4. CORPORATE -------------------- */
+.su-corporate-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+  background: linear-gradient(to bottom right, rgba(20, 83, 45, 0.15), rgba(6, 78, 59, 0.18));
+  backdrop-filter: blur(4px);
+}
+
+.su-corporate-grid {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .su-corporate-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.su-corporate-content {
+  max-width: 32rem;
+}
+
+.su-corporate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: #4ade80;
+  margin-bottom: 1.25rem;
+}
+
+.su-corporate-desc {
+  font-size: 1rem;
+  color: #cbd5e1;
+  line-height: 1.75;
+  margin: 0.75rem 0 2rem;
+}
+
+.su-corporate-desc strong {
+  color: #4ade80;
+}
+
+.su-corporate-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  background: linear-gradient(135deg, #22c55e, #059669);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 24px -6px rgba(34, 197, 94, 0.35);
+  transition: box-shadow 0.3s;
+}
+
+.su-corporate-cta:hover {
+  box-shadow: 0 10px 30px -6px rgba(34, 197, 94, 0.5);
+}
+
+.su-corporate-benefits {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 480px) {
+  .su-corporate-benefits {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.su-benefit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  transition: border-color 0.3s;
+}
+
+.su-benefit-row:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.su-benefit-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+/* -------------------- 5. INVESTORS -------------------- */
+.su-investors-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+}
+
+.su-investor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: #a78bfa;
+  margin-bottom: 1rem;
+}
+
+.su-investor-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  max-width: 48rem;
+  margin: 0 auto 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .su-investor-metrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.su-investor-metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  cursor: default;
+  transition: border-color 0.3s;
+}
+
+.su-investor-metric-card:hover {
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.su-investor-metric-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #a78bfa, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 0.3rem;
+}
+
+.su-investor-metric-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.su-investor-cta-wrap {
+  text-align: center;
+}
+
+.su-investor-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 24px -6px rgba(124, 58, 237, 0.35);
+  transition: box-shadow 0.3s;
+}
+
+.su-investor-cta:hover {
+  box-shadow: 0 10px 30px -6px rgba(124, 58, 237, 0.5);
+}
+
+/* -------------------- 6. FAQ -------------------- */
+.su-faq-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.su-faq-list {
+  max-width: 48rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.su-faq-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.su-faq-item:hover,
+.su-faq-open {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.su-faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: none;
+  border: none;
+  color: #f1f5f9;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.su-faq-question:hover {
+  color: #4ade80;
+}
+
+.su-faq-chevron {
+  display: flex;
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
+.su-faq-answer-wrapper {
+  overflow: hidden;
+}
+
+.su-faq-answer {
+  padding: 0 1.25rem 1.1rem;
+  margin: 0;
+  font-size: 0.92rem;
+  color: #9ca3af;
+  line-height: 1.7;
+}
+
+/* -------------------- 7. CONTACT FORM -------------------- */
+.su-contact-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+}
+
+.su-contact-form {
+  max-width: 44rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.su-form-row {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .su-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.su-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.su-form-full {
+  width: 100%;
+}
+
+.su-form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.su-required {
+  color: #f87171;
+}
+
+.su-form-group input,
+.su-form-group select,
+.su-form-group textarea {
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  color: #f1f5f9;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.25s, background 0.25s;
+  outline: none;
+}
+
+.su-form-group input::placeholder,
+.su-form-group textarea::placeholder {
+  color: #6b7280;
+}
+
+.su-form-group input:focus,
+.su-form-group select:focus,
+.su-form-group textarea:focus {
+  border-color: #22c55e;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.su-form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+}
+
+.su-form-group select option {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.su-form-group textarea {
+  resize: vertical;
+  min-height: 7rem;
+}
+
+.su-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  padding: 0.8rem 2rem;
+  background: linear-gradient(135deg, #22c55e, #059669);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px -6px rgba(34, 197, 94, 0.35);
+  transition: box-shadow 0.3s, opacity 0.2s;
+}
+
+.su-submit-btn:hover {
+  box-shadow: 0 10px 30px -6px rgba(34, 197, 94, 0.5);
+}
+
+.su-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* -------------------- 8. WALL OF GRATITUDE -------------------- */
+.su-wall-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 0;
+  background: linear-gradient(to bottom right, rgba(20, 83, 45, 0.1), rgba(6, 78, 59, 0.12));
+  backdrop-filter: blur(4px);
+}
+
+.su-wall-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .su-wall-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .su-wall-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.su-wall-card {
+  padding: 1.25rem 1.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  transition: border-color 0.3s;
+}
+
+.su-wall-card:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.su-wall-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.su-wall-name {
+  font-weight: 700;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.su-wall-badge {
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.su-badge-seed {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.su-badge-harvest {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.su-badge-champion {
+  background: rgba(45, 212, 191, 0.15);
+  color: #2dd4bf;
+}
+
+.su-badge-leader {
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+}
+
+.su-badge-default {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+}
+
+.su-wall-message {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0 0 0.6rem;
+  font-style: italic;
+}
+
+.su-wall-date {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+/* -------------------- 9. TRUST BADGES / FOOTER -------------------- */
+.su-footer {
+  position: relative;
+  z-index: 10;
+  padding: 4rem 0 2.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.su-trust-badges {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 3.5rem;
+}
+
+@media (min-width: 768px) {
+  .su-trust-badges {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.su-trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1rem;
+  color: #4ade80;
+}
+
+.su-trust-badge div {
+  display: flex;
+  flex-direction: column;
+}
+
+.su-trust-badge strong {
+  font-size: 0.95rem;
+  color: #f1f5f9;
+  margin-bottom: 0.15rem;
+}
+
+.su-trust-badge span {
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
+
+.su-footer-bottom {
+  text-align: center;
+  padding-top: 1rem;
+}
+
+.su-footer-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.su-footer-leaf {
+  color: #4ade80;
+}
+
+.su-footer-logo span {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.su-footer-tagline {
+  color: #9ca3af;
+  font-size: 0.92rem;
+  margin: 0 0 1.5rem;
+}
+
+.su-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.su-footer-links a {
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.25s;
+}
+
+.su-footer-links a:hover {
+  color: #4ade80;
+}
+
+.su-footer-copy {
+  color: #4b5563;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+/* -------------------- Section Divider Accents -------------------- */
+.su-stats-section::before,
+.su-faq-section::before,
+.su-wall-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(34, 197, 94, 0.22) 40%,
+    rgba(34, 197, 94, 0.22) 60%,
+    transparent 100%
+  );
+}
+
+.su-stats-section,
+.su-faq-section,
+.su-wall-section {
+  position: relative;
+}
+
+/* -------------------- Smooth Scrolling -------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
