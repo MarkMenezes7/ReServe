@@ -181,6 +181,7 @@ router.get('/impact/:userId', async (req, res) => {
     const total = totalFood?.total || 0;
     res.json({
       totalFoodCollected: total,
+      foodCollected: total,
       mealsProvided: Math.floor(total * 2.5),
       co2Saved: Math.floor(total * 2.5),
       peopleFed: Math.floor(total * 2.5),

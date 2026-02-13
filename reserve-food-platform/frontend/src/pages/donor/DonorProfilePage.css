@@ -1,4 +1,4 @@
-/* DonorProfilePage.css */
+/* DonorProfilePage.css - Dark Theme */
 
 .donor-profile {
   max-width: 1100px;
@@ -12,13 +12,13 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   gap: 12px;
 }
 
 .profile-spinner {
   animation: profile-spin 1s linear infinite;
-  color: #10b981;
+  color: #4ade80;
 }
 
 @keyframes profile-spin {
@@ -33,13 +33,13 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
   gap: 12px;
   text-align: center;
 }
 
 .profile-empty h3 {
-  color: #374151;
+  color: #e2e8f0;
   margin: 0;
 }
 
@@ -64,17 +64,17 @@
 
 /* Cards */
 .profile-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f3f4f6;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .profile-card-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: #e2e8f0;
   margin: 0 0 16px;
   display: flex;
   align-items: center;
@@ -82,7 +82,7 @@
 }
 
 .profile-title-icon {
-  color: #10b981;
+  color: #4ade80;
 }
 
 .profile-card-header-row {
@@ -105,7 +105,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #22c55e, #10b981);
   color: white;
   display: flex;
   align-items: center;
@@ -118,13 +118,13 @@
 .profile-name {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #111827;
+  color: #e2e8f0;
   margin: 0 0 4px;
 }
 
 .profile-org {
   font-size: 0.88rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   margin: 0 0 10px;
 }
 
@@ -132,8 +132,8 @@
   display: inline-block;
   padding: 4px 14px;
   border-radius: 20px;
-  background: #ecfdf5;
-  color: #059669;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -142,7 +142,7 @@
 
 .profile-joined {
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
   margin: 12px 0 0;
 }
 
@@ -151,10 +151,10 @@
   align-items: center;
   gap: 6px;
   padding: 8px 20px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  background: white;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -163,8 +163,9 @@
 }
 
 .profile-edit-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #e2e8f0;
 }
 
 /* Detail List (view mode) */
@@ -181,14 +182,14 @@
 }
 
 .profile-detail-icon {
-  color: #10b981;
+  color: #4ade80;
   margin-top: 2px;
   flex-shrink: 0;
 }
 
 .profile-detail-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-weight: 500;
@@ -196,7 +197,7 @@
 
 .profile-detail-value {
   font-size: 0.9rem;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.8);
   margin-top: 1px;
   word-break: break-word;
 }
@@ -220,20 +221,20 @@
   gap: 6px;
   font-size: 0.82rem;
   font-weight: 500;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .profile-form-label svg {
-  color: #10b981;
+  color: #4ade80;
 }
 
 .profile-form-input {
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
   font-size: 0.88rem;
-  color: #111827;
+  color: #e2e8f0;
   outline: none;
   transition: border-color 0.15s ease;
   width: 100%;
@@ -241,21 +242,21 @@
 }
 
 .profile-form-input:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
 }
 
 .profile-form-input::placeholder {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .profile-form-textarea {
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
   font-size: 0.88rem;
-  color: #111827;
+  color: #e2e8f0;
   outline: none;
   resize: vertical;
   font-family: inherit;
@@ -265,12 +266,12 @@
 }
 
 .profile-form-textarea:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
 }
 
 .profile-form-textarea::placeholder {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .profile-form-row {
@@ -284,19 +285,19 @@
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  background: white;
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .profile-cancel-btn:hover {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .profile-save-btn {
@@ -307,7 +308,7 @@
   padding: 10px 24px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #22c55e, #10b981);
   color: white;
   font-size: 0.88rem;
   font-weight: 600;
@@ -340,20 +341,20 @@
 .profile-rating-big {
   text-align: center;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .profile-rating-number {
   font-size: 2.4rem;
   font-weight: 700;
-  color: #111827;
+  color: #e2e8f0;
   line-height: 1;
   margin-bottom: 6px;
 }
 
 .profile-rating-count {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   margin-top: 6px;
 }
 
@@ -368,7 +369,7 @@
   align-items: center;
   gap: 10px;
   font-size: 0.84rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .profile-rating-row > span:first-child {
@@ -380,7 +381,7 @@
   width: 30px;
   text-align: right;
   font-weight: 600;
-  color: #374151;
+  color: #e2e8f0;
   flex-shrink: 0;
 }
 
@@ -390,7 +391,7 @@
   flex-direction: column;
   gap: 6px;
   padding-top: 16px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .profile-dist-row {
@@ -404,7 +405,7 @@
   text-align: right;
   font-size: 0.82rem;
   font-weight: 500;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .profile-dist-star {
@@ -416,7 +417,7 @@
 .profile-dist-track {
   flex: 1;
   height: 8px;
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -432,7 +433,7 @@
   width: 24px;
   text-align: right;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Reviews */
@@ -444,7 +445,7 @@
 
 .profile-reviews-loading {
   text-align: center;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
   padding: 24px 0;
   font-size: 0.88rem;
 }
@@ -454,7 +455,7 @@
   flex-direction: column;
   align-items: center;
   padding: 32px 0;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
   gap: 8px;
   text-align: center;
 }

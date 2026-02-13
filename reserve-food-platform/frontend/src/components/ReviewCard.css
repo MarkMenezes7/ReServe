@@ -1,9 +1,9 @@
 .review-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 18px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f3f4f6;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .review-card-header {
@@ -23,7 +23,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #22c55e, #10b981);
   color: white;
   display: flex;
   align-items: center;
@@ -35,22 +35,22 @@
 .review-card-name {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #111827;
+  color: #e2e8f0;
 }
 
 .review-card-org {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .review-card-date {
   font-size: 0.78rem;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .review-card-food {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 10px;
   font-style: italic;
 }
@@ -67,14 +67,14 @@
   align-items: center;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .review-card-comment {
   font-size: 0.88rem;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.5;
   margin: 0;
   padding-top: 10px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }

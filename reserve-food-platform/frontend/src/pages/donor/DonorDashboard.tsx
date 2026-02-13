@@ -18,6 +18,8 @@ import {
   Clock,
   AlertCircle,
   MessageCircle,
+  BarChart3,
+  User,
 } from 'lucide-react';
 import './DonorDashboard.css';
 import { Claim, DonorStats, Listing } from '../../types';
@@ -208,6 +210,20 @@ const DonorDashboard = () => {
             <MessageCircle className="nav-icon" />
             <span>Chat</span>
           </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/donor/analytics')}
+          >
+            <BarChart3 className="nav-icon" />
+            <span>Analytics</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/donor/profile')}
+          >
+            <User className="nav-icon" />
+            <span>Profile</span>
+          </button>
         </nav>
 
         <button className="logout-btn" onClick={handleLogout}>
@@ -333,6 +349,7 @@ const DonorDashboard = () => {
                 <motion.button
                   className="action-card"
                   whileHover={{ scale: 1.02, y: -5 }}
+                  onClick={() => navigate('/donor/analytics')}
                 >
                   <TrendingUp className="action-icon" />
                   <h3>View Analytics</h3>

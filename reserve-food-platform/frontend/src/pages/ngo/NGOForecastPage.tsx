@@ -1,36 +1,70 @@
-import { useState, useEffect } from 'react';
-import { BarChart2, TrendingUp, Clock, Zap } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Brain, Activity, Clock, BarChart2, TrendingUp, Zap, Layers,
+  ChevronUp, ChevronDown, Minus, Sparkles, Radio, Calendar, MapPin,
+} from 'lucide-react';
 import Layout from '../../components/Layout';
 import { useToast } from '../../components/ToastProvider';
 import { mlApi } from '../../services/api';
-import type { MLForecastHour, MLForecastDay } from '../../types';
+import type { MLForecastHour, MLForecastDay, ForecastSummary, CategoryDistribution, AIInsight, AreaForecast } from '../../types';
 import './NGOForecastPage.css';
+
+const HOUR_LABELS = ['12a','1a','2a','3a','4a','5a','6a','7a','8a','9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'];
+
+function getHeatColor(probability: number): string {
+  if (probability >= 80) return 'var(--heat-hot)';
+  if (probability >= 60) return 'var(--heat-warm)';
+  if (probability >= 40) return 'var(--heat-medium)';
+  if (probability >= 20) return 'var(--heat-cool)';
+  return 'var(--heat-cold)';
+}
+
+function getHeatClass(probability: number): string {
+  if (probability >= 80) return 'heat-hot';
+  if (probability >= 60) return 'heat-warm';
+  if (probability >= 40) return 'heat-medium';
+  if (probability >= 20) return 'heat-cool';
+  return 'heat-cold';
+}
 
 export default function NGOForecastPage() {
   const [hourlyForecast, setHourlyForecast] = useState<MLForecastHour[]>([]);
   const [weeklyForecast, setWeeklyForecast] = useState<MLForecastDay[]>([]);
   const [peakHours, setPeakHours] = useState<{ hour: number; count: number }[]>([]);
+  const [summary, setSummary] = useState<ForecastSummary | null>(null);
+  const [categories, setCategories] = useState<CategoryDistribution[]>([]);
+  const [insights, setInsights] = useState<AIInsight[]>([]);
+  const [areaForecasts, setAreaForecasts] = useState<AreaForecast[]>([]);
+  const [mlHealth, setMlHealth] = useState<{ status: string; backend?: string } | null>(null);
   const [hourlySource, setHourlySource] = useState('');
-  const [weeklySource, setWeeklySource] = useState('');
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+  const userId = parseInt(localStorage.getItem('userId') || '0');
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     try {
-      const [h, w, p] = await Promise.all([
-        mlApi.getForecast24h(),
-        mlApi.getForecastWeekly(),
-        mlApi.getPeakHours(),
+      const [h, w, p, s, c, health, ins, areas] = await Promise.all([
+        mlApi.getForecast24h().catch(() => ({ forecast: [], source: 'fallback' })),
+        mlApi.getForecastWeekly().catch(() => ({ forecast: [], source: 'fallback' })),
+        mlApi.getPeakHours().catch(() => ({ hours: [], source: 'fallback' })),
+        mlApi.getForecastSummary().catch(() => ({ activeListings: 0, todayListings: 0, weeklyListings: 0, avgDailyListings: 0, peakHour: null, categoryVelocity: [], demandScore: 0, source: 'fallback' })),
+        mlApi.getCategoryDistribution().catch(() => ({ distribution: [], source: 'fallback' })),
+        mlApi.getHealth().catch(() => ({ status: 'offline' })),
+        mlApi.getNgoInsights(userId).catch(() => ({ insights: [], count: 0 })),
+        mlApi.getAreaForecast().catch(() => ({ areas: [], source: 'fallback' })),
       ]);
       setHourlyForecast(h.forecast || []);
       setHourlySource(h.source);
       setWeeklyForecast(w.forecast || []);
-      setWeeklySource(w.source);
       setPeakHours(p.hours || []);
+      setSummary(s);
+      setCategories(c.distribution || []);
+      setMlHealth(health);
+      setInsights(ins.insights || []);
+      setAreaForecasts(areas.areas || []);
     } catch {
       showToast('Failed to load forecast data', 'error');
     } finally {
@@ -38,85 +72,347 @@ export default function NGOForecastPage() {
     }
   }
 
-  const maxHourlyProb = Math.max(...hourlyForecast.map(h => h.probability), 1);
-  const maxWeeklyProb = Math.max(...weeklyForecast.map(d => d.probability), 1);
   const maxPeakCount = Math.max(...peakHours.map(p => p.count), 1);
+
+  const topHours = useMemo(() => {
+    return [...hourlyForecast].sort((a, b) => b.probability - a.probability).slice(0, 3);
+  }, [hourlyForecast]);
+
+  const bestDay = useMemo(() => {
+    if (!weeklyForecast.length) return null;
+    return [...weeklyForecast].sort((a, b) => b.probability - a.probability)[0];
+  }, [weeklyForecast]);
+
+  const totalExpectedQty = useMemo(() => {
+    return weeklyForecast.reduce((sum, d) => sum + d.expectedQuantity, 0);
+  }, [weeklyForecast]);
 
   if (loading) {
     return (
       <Layout>
-        <div className="forecast-loading">Loading forecast data...</div>
+        <div className="fc-loading">
+          <div className="fc-loading-brain">
+            <Brain size={40} />
+          </div>
+          <p>AI is analyzing patterns...</p>
+          <div className="fc-loading-dots">
+            <span /><span /><span />
+          </div>
+        </div>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="forecast-page">
-        <div className="forecast-header">
-          <h1><TrendingUp size={24} /> Demand Forecasting</h1>
-          <p>ML-powered predictions to optimize your collection schedule</p>
+      <div className="fc-page">
+        {/* Header */}
+        <div className="fc-header">
+          <div className="fc-header-left">
+            <div className="fc-header-icon">
+              <Brain size={28} />
+            </div>
+            <div>
+              <h1>AI Forecast Center</h1>
+              <p>ML-powered demand predictions to optimize your collection schedule</p>
+            </div>
+          </div>
+          <div className="fc-header-right">
+            <div className={`fc-ml-status ${mlHealth?.status === 'ml_service_offline' ? 'offline' : 'online'}`}>
+              <Radio size={14} />
+              <span>{mlHealth?.status === 'ml_service_offline' ? 'ML Offline' : 'ML Active'}</span>
+            </div>
+            <div className={`fc-source-badge source-${hourlySource}`}>
+              {hourlySource === 'fallback' ? 'Statistical Model' : 'ML Engine'}
+            </div>
+          </div>
         </div>
 
-        <div className="forecast-section">
-          <div className="forecast-section-header">
-            <h2><Clock size={18} /> 24-Hour Forecast</h2>
-            <span className={`source-badge source-${hourlySource}`}>{hourlySource}</span>
-          </div>
-          <div className="forecast-chart">
-            {hourlyForecast.map(h => (
-              <div key={h.hour} className="forecast-bar-item">
-                <div className="forecast-bar-container">
-                  <div
-                    className={`forecast-bar confidence-${h.confidence}`}
-                    style={{ height: `${(h.probability / maxHourlyProb) * 100}%` }}
+        {/* Summary Cards Row */}
+        <div className="fc-summary-row">
+          <motion.div className="fc-summary-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <div className="fc-summary-icon green"><Activity size={20} /></div>
+            <div className="fc-summary-value">{summary?.activeListings ?? 0}</div>
+            <div className="fc-summary-label">Active Listings</div>
+          </motion.div>
+          <motion.div className="fc-summary-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            <div className="fc-summary-icon blue"><Calendar size={20} /></div>
+            <div className="fc-summary-value">{summary?.weeklyListings ?? 0}</div>
+            <div className="fc-summary-label">This Week</div>
+          </motion.div>
+          <motion.div className="fc-summary-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div className="fc-summary-icon purple"><TrendingUp size={20} /></div>
+            <div className="fc-summary-value">{summary?.avgDailyListings ?? 0}</div>
+            <div className="fc-summary-label">Avg Daily</div>
+          </motion.div>
+          <motion.div className="fc-summary-card fc-demand-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <div className="fc-demand-gauge">
+              <svg viewBox="0 0 120 70" className="fc-gauge-svg">
+                <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" strokeLinecap="round" />
+                <path
+                  d="M 10 65 A 50 50 0 0 1 110 65"
+                  fill="none"
+                  stroke="url(#gaugeGrad)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(summary?.demandScore ?? 0) * 1.57} 157`}
+                />
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#22c55e" />
+                    <stop offset="50%" stopColor="#eab308" />
+                    <stop offset="100%" stopColor="#ef4444" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="fc-demand-score">{summary?.demandScore ?? 0}</div>
+            </div>
+            <div className="fc-summary-label">Demand Score</div>
+          </motion.div>
+        </div>
+
+        {/* Main Grid */}
+        <div className="fc-grid">
+          {/* 24h Heatmap */}
+          <motion.div className="fc-card fc-heatmap-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="fc-card-header">
+              <h2><Clock size={18} /> 24-Hour Demand Heatmap</h2>
+              <div className="fc-heat-legend">
+                <span className="fc-heat-legend-item"><span className="fc-heat-dot heat-cold" /> Low</span>
+                <span className="fc-heat-legend-item"><span className="fc-heat-dot heat-medium" /> Medium</span>
+                <span className="fc-heat-legend-item"><span className="fc-heat-dot heat-hot" /> High</span>
+              </div>
+            </div>
+            <div className="fc-heatmap-grid">
+              {hourlyForecast.map((h, i) => (
+                <motion.div
+                  key={h.hour}
+                  className={`fc-heatmap-cell ${getHeatClass(h.probability)}`}
+                  style={{ '--heat-bg': getHeatColor(h.probability) } as React.CSSProperties}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + i * 0.02 }}
+                  title={`${h.hour}:00 - ${h.probability}% probability, ~${h.expectedQuantity}kg`}
+                >
+                  <span className="fc-heatmap-hour">{HOUR_LABELS[h.hour]}</span>
+                  <span className="fc-heatmap-prob">{h.probability}%</span>
+                  <span className="fc-heatmap-qty">{h.expectedQuantity}kg</span>
+                </motion.div>
+              ))}
+            </div>
+            {topHours.length > 0 && (
+              <div className="fc-hot-times">
+                <Zap size={14} />
+                <span>Hottest windows: </span>
+                {topHours.map((h, i) => (
+                  <span key={h.hour} className="fc-hot-time-badge">
+                    {h.hour}:00{h.hour < 23 ? `-${h.hour + 1}:00` : ''} ({h.probability}%)
+                    {i < topHours.length - 1 && ', '}
+                  </span>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Weekly Forecast */}
+          <motion.div className="fc-card fc-weekly-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <div className="fc-card-header">
+              <h2><BarChart2 size={18} /> Weekly Forecast</h2>
+              {bestDay && (
+                <span className="fc-best-day-badge">
+                  Best: {bestDay.day}
+                </span>
+              )}
+            </div>
+            <div className="fc-weekly-list">
+              {weeklyForecast.map((d, i) => {
+                const maxProb = Math.max(...weeklyForecast.map(dd => dd.probability), 1);
+                const isBest = bestDay?.dayIndex === d.dayIndex;
+                return (
+                  <motion.div
+                    key={d.dayIndex}
+                    className={`fc-weekly-item ${isBest ? 'fc-weekly-best' : ''}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + i * 0.05 }}
                   >
-                    <span className="forecast-bar-value">{h.probability}%</span>
+                    <div className="fc-weekly-day">
+                      <span className="fc-weekly-day-name">{d.day.slice(0, 3)}</span>
+                      {isBest && <Sparkles size={12} className="fc-best-star" />}
+                    </div>
+                    <div className="fc-weekly-bar-area">
+                      <div className="fc-weekly-track">
+                        <motion.div
+                          className="fc-weekly-fill"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(d.probability / maxProb) * 100}%` }}
+                          transition={{ delay: 0.5 + i * 0.05, duration: 0.6 }}
+                        />
+                      </div>
+                    </div>
+                    <div className="fc-weekly-stats">
+                      <span className="fc-weekly-prob">{d.probability}%</span>
+                      <span className="fc-weekly-qty">~{d.expectedQuantity}kg</span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+            <div className="fc-weekly-summary">
+              <span>Total expected this week: <strong>~{totalExpectedQty} kg</strong></span>
+            </div>
+          </motion.div>
+
+          {/* Category Predictions */}
+          <motion.div className="fc-card fc-category-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <div className="fc-card-header">
+              <h2><Layers size={18} /> Category Intelligence</h2>
+            </div>
+            <div className="fc-category-list">
+              {categories.map((cat, i) => (
+                <motion.div
+                  key={cat.category}
+                  className="fc-category-item"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.04 }}
+                >
+                  <div className="fc-category-header">
+                    <span className="fc-category-name">
+                      {cat.category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                    <span className={`fc-trend-badge fc-trend-${cat.trend}`}>
+                      {cat.trend === 'rising' ? <ChevronUp size={12} /> : cat.trend === 'declining' ? <ChevronDown size={12} /> : <Minus size={12} />}
+                      {cat.trend}
+                    </span>
                   </div>
-                </div>
-                <span className="forecast-bar-label">{h.hour}:00</span>
-              </div>
-            ))}
-          </div>
+                  <div className="fc-category-bar-track">
+                    <motion.div
+                      className="fc-category-bar-fill"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${cat.percentage}%` }}
+                      transition={{ delay: 0.6 + i * 0.04, duration: 0.5 }}
+                    />
+                  </div>
+                  <div className="fc-category-meta">
+                    <span>{cat.percentage}% of donations</span>
+                    <span>{cat.totalQuantity} kg total</span>
+                    <span>{cat.activeCount} active</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Peak Hours */}
+          <motion.div className="fc-card fc-peak-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+            <div className="fc-card-header">
+              <h2><Zap size={18} /> Peak Donation Hours</h2>
+              {summary?.peakHour && (
+                <span className="fc-peak-badge">Top: {summary.peakHour.hour}:00</span>
+              )}
+            </div>
+            <div className="fc-peak-chart">
+              {peakHours.map((p, i) => (
+                <motion.div
+                  key={p.hour}
+                  className="fc-peak-bar-wrapper"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 + i * 0.02 }}
+                >
+                  <div className="fc-peak-bar-container">
+                    <motion.div
+                      className="fc-peak-bar"
+                      initial={{ height: 0 }}
+                      animate={{ height: `${(p.count / maxPeakCount) * 100}%` }}
+                      transition={{ delay: 0.7 + i * 0.02, duration: 0.4 }}
+                    />
+                  </div>
+                  <span className="fc-peak-label">{p.hour}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
 
-        <div className="forecast-section">
-          <div className="forecast-section-header">
-            <h2><BarChart2 size={18} /> Weekly Forecast</h2>
-            <span className={`source-badge source-${weeklySource}`}>{weeklySource}</span>
-          </div>
-          <div className="forecast-weekly-chart">
-            {weeklyForecast.map(d => (
-              <div key={d.dayIndex} className="weekly-bar-item">
-                <div className="weekly-bar-info">
-                  <span className="weekly-day">{d.day}</span>
-                  <span className="weekly-prob">{d.probability}% chance</span>
-                  <span className="weekly-qty">~{d.expectedQuantity} kg expected</span>
-                </div>
-                <div className="weekly-bar-track">
-                  <div className="weekly-bar-fill" style={{ width: `${(d.probability / maxWeeklyProb) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Area Intelligence */}
+        {areaForecasts.length > 0 && (
+          <motion.div className="fc-area-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+            <div className="fc-card-header">
+              <h2><MapPin size={18} /> Area Intelligence</h2>
+              <span className="fc-area-count">{areaForecasts.length} areas tracked</span>
+            </div>
+            <div className="fc-area-grid">
+              {areaForecasts.map((area, i) => (
+                <motion.div
+                  key={area.area}
+                  className="fc-area-card"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.65 + i * 0.05 }}
+                >
+                  <div className="fc-area-top">
+                    <div className="fc-area-name">{area.area}</div>
+                    {area.activeNow > 0 && (
+                      <span className="fc-area-active-badge">{area.activeNow} active</span>
+                    )}
+                  </div>
+                  <div className="fc-area-stats">
+                    <div className="fc-area-stat">
+                      <span className="fc-area-stat-value">{area.totalListings}</span>
+                      <span className="fc-area-stat-label">Total</span>
+                    </div>
+                    <div className="fc-area-stat">
+                      <span className="fc-area-stat-value">{area.successRate}%</span>
+                      <span className="fc-area-stat-label">Success</span>
+                    </div>
+                    <div className="fc-area-stat">
+                      <span className="fc-area-stat-value">{area.avgQuantity}</span>
+                      <span className="fc-area-stat-label">Avg kg</span>
+                    </div>
+                  </div>
+                  <div className="fc-area-timing">
+                    {area.peakHour !== null && (
+                      <span className="fc-area-timing-badge">
+                        <Clock size={11} /> Peak: {area.peakHour}:00
+                      </span>
+                    )}
+                    {area.peakDay && (
+                      <span className="fc-area-timing-badge">
+                        <Calendar size={11} /> Best: {area.peakDay}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-        <div className="forecast-section">
-          <div className="forecast-section-header">
-            <h2><Zap size={18} /> Peak Donation Hours</h2>
-          </div>
-          <div className="peak-hours-chart">
-            {peakHours.map(p => (
-              <div key={p.hour} className="peak-hour-item">
-                <span className="peak-hour-label">{p.hour}:00</span>
-                <div className="peak-hour-track">
-                  <div className="peak-hour-fill" style={{ width: `${(p.count / maxPeakCount) * 100}%` }} />
-                </div>
-                <span className="peak-hour-count">{p.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* AI Insights */}
+        {insights.length > 0 && (
+          <motion.div className="fc-insights-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+            <div className="fc-card-header">
+              <h2><Sparkles size={18} /> AI Insights</h2>
+            </div>
+            <div className="fc-insights-grid">
+              {insights.map((insight, i) => (
+                <motion.div
+                  key={i}
+                  className={`fc-insight-card fc-insight-${insight.color}`}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.75 + i * 0.08 }}
+                  whileHover={{ y: -3 }}
+                >
+                  <div className="fc-insight-title">{insight.title}</div>
+                  <div className="fc-insight-desc">{insight.description}</div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </Layout>
   );

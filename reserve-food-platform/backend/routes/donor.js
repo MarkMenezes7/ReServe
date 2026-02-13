@@ -176,45 +176,47 @@ router.get('/analytics/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    const monthlyDonations = await dbAll(`
-      SELECT strftime('%Y-%m', createdAt) as month, COUNT(*) as count, SUM(quantity) as totalQuantity
+    const monthly = await dbAll(`
+      SELECT strftime('%Y-%m', createdAt) as month, COUNT(*) as count, SUM(quantity) as quantity
       FROM listings WHERE donorId = ? GROUP BY month ORDER BY month DESC LIMIT 12
     `, [userId]);
 
-    const categoryBreakdown = await dbAll(`
-      SELECT category, COUNT(*) as count, SUM(quantity) as totalQuantity
+    const categories = await dbAll(`
+      SELECT category, COUNT(*) as count, SUM(quantity) as quantity
       FROM listings WHERE donorId = ? GROUP BY category ORDER BY count DESC
     `, [userId]);
 
-    const claimStats = await dbAll(`
-      SELECT c.status, COUNT(*) as count
-      FROM claims c JOIN listings l ON c.listingId = l.id
-      WHERE l.donorId = ? GROUP BY c.status
+    const hourly = await dbAll(`
+      SELECT CAST(strftime('%H', createdAt) AS INTEGER) as hour, COUNT(*) as count
+      FROM listings WHERE donorId = ? GROUP BY hour ORDER BY hour
     `, [userId]);
 
-    const avgRating = await dbGet(`
-      SELECT AVG(overall) as avgOverall, AVG(foodQuality) as avgQuality,
-             AVG(communication) as avgComm, AVG(timeliness) as avgTime, COUNT(*) as count
-      FROM reviews WHERE revieweeId = ?
+    const totals = await dbGet(`
+      SELECT COUNT(*) as totalDonations, COALESCE(SUM(quantity), 0) as totalQuantity
+      FROM listings WHERE donorId = ?
     `, [userId]);
 
-    const peopleFed = await dbGet(`
-      SELECT COALESCE(SUM(l.quantity), 0) as total
-      FROM listings l JOIN claims c ON c.listingId = l.id
+    const collected = await dbGet(`
+      SELECT COUNT(*) as count FROM claims c JOIN listings l ON c.listingId = l.id
       WHERE l.donorId = ? AND c.status = 'collected'
     `, [userId]);
 
+    const totalClaims = await dbGet(`
+      SELECT COUNT(*) as count FROM claims c JOIN listings l ON c.listingId = l.id
+      WHERE l.donorId = ?
+    `, [userId]);
+
+    const totalDonations = totals.totalDonations || 0;
+    const totalQuantity = totals.totalQuantity || 0;
+
     res.json({
-      monthlyDonations,
-      categoryBreakdown,
-      claimStats,
-      avgRating: avgRating || { avgOverall: 0, count: 0 },
-      impactMetrics: {
-        foodSaved: peopleFed.total,
-        mealsProvided: Math.floor(peopleFed.total * 2.5),
-        co2Saved: Math.floor(peopleFed.total * 2.5),
-        peopleFed: Math.floor(peopleFed.total * 2.5),
-      },
+      monthly,
+      categories,
+      hourly,
+      totalDonations,
+      totalQuantity,
+      avgPerDonation: totalDonations > 0 ? totalQuantity / totalDonations : 0,
+      collectionRate: totalClaims.count > 0 ? (collected.count / totalClaims.count) * 100 : 0,
     });
   } catch (error) {
     console.error('Donor analytics error:', error);

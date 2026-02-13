@@ -1,32 +1,38 @@
+/* NGOCollectionHistory.css - Dark Theme */
+
 .history-page { max-width: 1100px; }
 .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.history-header h1 { display: flex; align-items: center; gap: 8px; font-size: 1.4rem; color: #111827; margin: 0; }
-.history-export-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
-.history-export-btn:hover { background: #059669; }
+.history-header h1 { display: flex; align-items: center; gap: 8px; font-size: 1.4rem; color: #e2e8f0; margin: 0; }
+.history-export-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: linear-gradient(135deg, #22c55e, #10b981); color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; }
+.history-export-btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
 .history-filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.history-search { display: flex; align-items: center; gap: 8px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 200px; }
-.history-search input { border: none; outline: none; font-size: 0.88rem; flex: 1; }
-.history-filters select { padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.85rem; background: white; }
+.history-search { display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 200px; }
+.history-search input { border: none; outline: none; font-size: 0.88rem; flex: 1; background: transparent; color: #e2e8f0; }
+.history-search input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.history-search svg { color: rgba(255, 255, 255, 0.4); }
+.history-filters select { padding: 8px 12px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 0.85rem; background: rgba(255, 255, 255, 0.05); color: #e2e8f0; }
+.history-filters select option { background: #1e293b; color: #e2e8f0; }
 
-.history-summary { font-size: 0.82rem; color: #6b7280; margin-bottom: 12px; }
-.history-loading { padding: 40px; text-align: center; color: #6b7280; }
+.history-summary { font-size: 0.82rem; color: rgba(255, 255, 255, 0.5); margin-bottom: 12px; }
+.history-loading { padding: 40px; text-align: center; color: rgba(255, 255, 255, 0.5); }
 
-.history-table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.history-table-container { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
 .history-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-.history-table th { background: #f9fafb; padding: 12px 16px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; }
-.history-table td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; color: #374151; }
-.history-table tbody tr:hover { background: #f9fafb; }
-.history-food-name { font-weight: 600; }
-.history-category { font-size: 0.78rem; background: #f3f4f6; padding: 2px 8px; border-radius: 4px; }
+.history-table th { background: rgba(255, 255, 255, 0.03); padding: 12px 16px; text-align: left; font-weight: 600; color: rgba(255, 255, 255, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.history-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.7); }
+.history-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+.history-food-name { font-weight: 600; color: #e2e8f0; }
+.history-category { font-size: 0.78rem; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6); padding: 2px 8px; border-radius: 4px; }
 .history-status { font-size: 0.76rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-.status-collected { background: #ecfdf5; color: #10b981; }
-.status-pending { background: #fef3c7; color: #d97706; }
-.status-confirmed { background: #eff6ff; color: #3b82f6; }
-.status-cancelled { background: #fef2f2; color: #ef4444; }
-.history-empty { text-align: center; color: #9ca3af; padding: 30px; }
+.status-collected { background: rgba(16, 185, 129, 0.15); color: #4ade80; }
+.status-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.status-confirmed { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.status-cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.history-empty { text-align: center; color: rgba(255, 255, 255, 0.4); padding: 30px; }
 
 .history-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
-.history-pagination button { padding: 6px 14px; border: 1px solid #e5e7eb; border-radius: 6px; background: white; font-size: 0.82rem; cursor: pointer; }
-.history-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
-.history-pagination span { font-size: 0.82rem; color: #6b7280; }
+.history-pagination button { padding: 6px 14px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.7); font-size: 0.82rem; cursor: pointer; transition: all 0.15s ease; }
+.history-pagination button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.history-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.history-pagination span { font-size: 0.82rem; color: rgba(255, 255, 255, 0.5); }

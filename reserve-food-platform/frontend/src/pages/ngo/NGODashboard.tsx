@@ -67,7 +67,7 @@ const NGODashboard = () => {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeTab, setActiveTab] = useState<'browse' | 'claims' | 'forecast'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'claims'>('browse');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -254,11 +254,18 @@ const NGODashboard = () => {
             <span>My Claims</span>
           </button>
           <button
-            className={`nav-item ${activeTab === 'forecast' ? 'active' : ''}`}
-            onClick={() => setActiveTab('forecast')}
+            className="nav-item"
+            onClick={() => navigate('/ngo/forecast')}
           >
             <Sparkles className="nav-icon" />
             <span>ML Forecast</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/ngo/impact')}
+          >
+            <TrendingUp className="nav-icon" />
+            <span>Impact</span>
           </button>
           <button
             className="nav-item"
@@ -533,23 +540,6 @@ const NGODashboard = () => {
             </div>
           )}
 
-          {activeTab === 'forecast' && (
-            <div className="forecast-section">
-              <h2 className="section-title">ML Forecast</h2>
-              <div className="forecast-placeholder">
-                <Sparkles size={64} />
-                <h3>Coming Soon!</h3>
-                <p>AI-powered predictions for food availability will be available here</p>
-                <p>Features include:</p>
-                <ul>
-                  <li>24-hour availability forecast</li>
-                  <li>Donor pattern analysis</li>
-                  <li>Personalized recommendations</li>
-                  <li>Smart collection planning</li>
-                </ul>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>

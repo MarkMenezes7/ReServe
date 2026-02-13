@@ -198,3 +198,52 @@ export interface GratitudeEntry {
   tier?: string;
   createdAt: string;
 }
+
+export interface AIInsight {
+  type: string;
+  icon: string;
+  title: string;
+  description: string;
+  color: string;
+}
+
+export interface CategoryDistribution {
+  category: string;
+  count: number;
+  percentage: number;
+  totalQuantity: number;
+  avgQuantity: number;
+  activeCount: number;
+  trend: 'rising' | 'stable' | 'declining';
+}
+
+export interface CategoryVelocity {
+  category: string;
+  thisWeek: number;
+  lastWeek: number;
+  change: number;
+  total: number;
+}
+
+export interface ForecastSummary {
+  activeListings: number;
+  todayListings: number;
+  weeklyListings: number;
+  avgDailyListings: number;
+  peakHour: { hour: number; count: number } | null;
+  categoryVelocity: CategoryVelocity[];
+  demandScore: number;
+  source: string;
+}
+
+export interface AreaForecast {
+  area: string;
+  totalListings: number;
+  activeNow: number;
+  avgQuantity: number;
+  successRate: number;
+  peakHour: number | null;
+  peakDay: string | null;
+  lat: number;
+  lng: number;
+}
