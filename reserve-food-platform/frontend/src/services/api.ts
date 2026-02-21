@@ -118,6 +118,7 @@ export const notificationsApi = {
 export const adminApi = {
   getStats: () => apiRequest<import('../types').AdminStats>('/api/admin/stats'),
   getUsers: (params?: string) => apiRequest<{ users: import('../types').User[]; total: number }>(`/api/admin/users${params ? `?${params}` : ''}`),
+  getPendingVerifications: () => apiRequest<import('../types').User[]>('/api/admin/pending-verifications'),
   verifyUser: (id: number) => apiRequest<{ message: string }>(`/api/admin/users/${id}/verify`, { method: 'PATCH' }),
   activateUser: (id: number, isActive: boolean) =>
     apiRequest<{ message: string }>(`/api/admin/users/${id}/activate`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),

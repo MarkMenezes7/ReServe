@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./green-white-theme.css";
 
 * {
   margin: 0;

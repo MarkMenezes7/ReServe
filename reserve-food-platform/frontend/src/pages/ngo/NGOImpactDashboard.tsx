@@ -40,7 +40,7 @@ function CircleProgress({ percent, size = 80, stroke = 6, color = '#4ade80' }: {
   const offset = circ - (percent / 100) * circ;
   return (
     <svg width={size} height={size} className="ip-circle-svg">
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
       <motion.circle
         cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
         strokeLinecap="round" strokeDasharray={circ}
@@ -81,13 +81,19 @@ export default function NGOImpactDashboard() {
   }
 
   const foodCollected = personalImpact.foodCollected || 0;
-  const mealsProvided = Math.floor(foodCollected * 2.5);
+  // ~1.2 meals per kg of rescued food (conservative; avg meal ~0.4-0.5 kg cooked weight + some loss)
+  const mealsProvided = Math.floor(foodCollected * 1.2);
+  // WRAP/FAO: ~2.5 kg CO2e per kg of food waste avoided (production + transport + landfill methane)
   const co2Saved = Math.floor(foodCollected * 2.5);
-  const waterSaved = Math.floor(foodCollected * 100);
+  // UNESCO/GRACE: avg ~1000 L of embedded water per kg of food, but ~200 L is a practical rescue credit
+  const waterSaved = Math.floor(foodCollected * 200);
 
+  // Avg mature tree absorbs ~22 kg CO2/year (US Forest Service)
   const treesEquiv = Math.round(co2Saved / 22);
-  const carsEquiv = Math.round(co2Saved / 4600 * 365);
-  const poolsEquiv = (waterSaved / 50000).toFixed(1);
+  // Avg car emits ~4.6 tonnes CO2/year, so per day = 4600/365 ≈ 12.6 kg
+  const carsEquiv = Math.round(co2Saved / 12.6);
+  // Olympic pool = 2,500,000 L
+  const poolsEquiv = (waterSaved / 2500000).toFixed(2);
 
   const foodPct = platformStats && platformStats.foodRescued > 0 ? Math.min(100, (foodCollected / platformStats.foodRescued) * 100) : 0;
   const mealsPct = platformStats && platformStats.mealsProvided > 0 ? Math.min(100, (mealsProvided / platformStats.mealsProvided) * 100) : 0;

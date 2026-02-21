@@ -33,6 +33,37 @@ router.post('/predict/category', authenticateToken, async (req, res) => {
   res.json(result);
 });
 
+// Spoilage prediction
+router.post('/predict/spoilage', authenticateToken, async (req, res) => {
+  const result = await proxyToML('/api/ml/predict/spoilage', 'POST', req.body);
+  if (result.fallback) {
+    // Fallback: basic heuristic when ML service is down
+    const { category, storageType, foodType, bestBefore, quantity } = req.body;
+    const baseHours = {
+      'cooked-meals': 4, 'bakery': 48, 'dairy': 6,
+      'fruits-vegetables': 72, 'packaged-food': 720, 'beverages': 168,
+    };
+    const storageMult = { 'room-temperature': 1, 'refrigerated': 3.5, 'frozen': 12 };
+    const typeMult = { 'veg': 1, 'vegan': 1, 'non-veg': 0.7 };
+    const base = baseHours[category] || 24;
+    const shelfLifeHours = Math.round(base * (storageMult[storageType] || 1) * (typeMult[foodType] || 1));
+    let riskLevel = 'medium';
+    if (bestBefore) {
+      const hoursLeft = (new Date(bestBefore) - Date.now()) / 3600000;
+      riskLevel = hoursLeft < shelfLifeHours * 0.3 ? 'high' : hoursLeft < shelfLifeHours * 0.6 ? 'medium' : 'low';
+    }
+    const tips = [];
+    if (storageType === 'room-temperature' && ['dairy', 'cooked-meals'].includes(category))
+      tips.push('Refrigerate immediately to extend shelf life by 3-4x');
+    if (foodType === 'non-veg')
+      tips.push('Non-vegetarian items spoil faster — keep cold chain intact');
+    if (riskLevel === 'high')
+      tips.push('⚠️ High spoilage risk — prioritize quick collection');
+    return res.json({ shelfLifeHours, riskLevel, confidence: 'medium', tips, source: 'fallback' });
+  }
+  res.json(result);
+});
+
 router.get('/forecast/24h', authenticateToken, async (req, res) => {
   const result = await proxyToML('/api/ml/forecast/24h');
   if (result.fallback) {

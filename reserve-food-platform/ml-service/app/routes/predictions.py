@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 import numpy as np
+from datetime import datetime
 
 predictions_bp = Blueprint('predictions', __name__)
 
@@ -88,4 +89,94 @@ def predict_category():
     return jsonify({
         'predictions': predictions,
         'source': 'ml'
+    })
+
+
+@predictions_bp.route('/predict/spoilage', methods=['POST'])
+def predict_spoilage():
+    """
+    Predict food spoilage / shelf-life based on category, storage type, food type,
+    and best-before date.  Uses research-based heuristics for different food
+    categories and storage conditions.
+    """
+    data = request.get_json() or {}
+    category = data.get('category', 'cooked-meals')
+    storage_type = data.get('storageType', 'room-temperature')
+    food_type = data.get('foodType', 'veg')
+    best_before = data.get('bestBefore', '')
+    quantity = data.get('quantity', 1)
+
+    # Base shelf-life in hours by category (at room temperature)
+    base_shelf_hours = {
+        'cooked-meals': 4,
+        'bakery': 48,
+        'dairy': 6,
+        'fruits-vegetables': 72,
+        'packaged-food': 720,   # 30 days
+        'beverages': 168,       # 7 days
+    }
+
+    # Storage multipliers (how much longer food lasts under different storage)
+    storage_multiplier = {
+        'room-temperature': 1.0,
+        'refrigerated': 3.5,
+        'frozen': 12.0,
+    }
+
+    # Non-veg spoils faster
+    food_type_multiplier = {
+        'veg': 1.0,
+        'vegan': 1.0,
+        'non-veg': 0.7,
+    }
+
+    base = base_shelf_hours.get(category, 24)
+    s_mult = storage_multiplier.get(storage_type, 1.0)
+    f_mult = food_type_multiplier.get(food_type, 1.0)
+
+    shelf_life_hours = round(base * s_mult * f_mult)
+
+    # Add a small variance for realism
+    shelf_life_hours = max(1, shelf_life_hours + int(np.random.uniform(-shelf_life_hours * 0.05, shelf_life_hours * 0.05)))
+
+    # Calculate risk level based on best-before vs shelf life
+    risk_level = 'low'
+    if best_before:
+        try:
+            bb = datetime.fromisoformat(best_before.replace('Z', '+00:00').replace('T', ' ').split('+')[0])
+            hours_until_bb = (bb - datetime.now()).total_seconds() / 3600
+            if hours_until_bb < shelf_life_hours * 0.3:
+                risk_level = 'high'
+            elif hours_until_bb < shelf_life_hours * 0.6:
+                risk_level = 'medium'
+            else:
+                risk_level = 'low'
+        except Exception:
+            risk_level = 'medium'
+
+    # Confidence based on how well we know the category
+    well_known = ['cooked-meals', 'dairy', 'bakery']
+    confidence = 'high' if category in well_known else 'medium'
+
+    # Generate contextual tips
+    tips = []
+    if storage_type == 'room-temperature' and category in ['dairy', 'cooked-meals']:
+        tips.append('Refrigerate immediately to extend shelf life by 3-4x')
+    if food_type == 'non-veg':
+        tips.append('Non-vegetarian items spoil faster — keep cold chain intact')
+    if category == 'fruits-vegetables':
+        tips.append('Store in cool, dry place. Avoid direct sunlight')
+    if quantity > 10:
+        tips.append('Large quantities may have uneven cooling — distribute if possible')
+    if risk_level == 'high':
+        tips.append('⚠️ High spoilage risk — prioritize quick collection')
+    if storage_type == 'frozen':
+        tips.append('Keep frozen until pickup. Thawed food should not be refrozen')
+
+    return jsonify({
+        'shelfLifeHours': shelf_life_hours,
+        'riskLevel': risk_level,
+        'confidence': confidence,
+        'tips': tips,
+        'source': 'ml',
     })

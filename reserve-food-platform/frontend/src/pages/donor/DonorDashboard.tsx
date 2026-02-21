@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,9 +20,13 @@ import {
   MessageCircle,
   BarChart3,
   User,
+  MapPin,
+  Thermometer,
+  Info,
 } from 'lucide-react';
 import './DonorDashboard.css';
 import { Claim, DonorStats, Listing } from '../../types';
+import VerificationBanner from '../../components/common/VerificationBanner';
 
 const DonorDashboard = () => {
   const [stats, setStats] = useState<DonorStats>({
@@ -37,6 +41,7 @@ const DonorDashboard = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'claims'>('overview');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'claimed' | 'collected' | 'expired'>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [viewListing, setViewListing] = useState<Listing | null>(null);
   
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
@@ -94,6 +99,28 @@ const DonorDashboard = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  const handleDeleteListing = async (listingId: number) => {
+    const confirmed = window.confirm('Are you sure you want to delete this listing?');
+    if (!confirmed) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/donor/listings/${listingId}`, {
+        method: 'DELETE',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        alert('Listing deleted');
+        fetchData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete listing');
+    }
   };
 
   const handleMarkCollected = async (claimId: number) => {
@@ -248,6 +275,8 @@ const DonorDashboard = () => {
             <span>Add Food</span>
           </button>
         </div>
+
+        <VerificationBanner userType="donor" />
 
         {/* Stats Cards */}
         <div className="stats-grid">
@@ -439,13 +468,13 @@ const DonorDashboard = () => {
                       </div>
 
                       <div className="listing-actions">
-                        <button className="btn-icon" title="View">
+                        <button className="btn-icon" title="View" onClick={() => setViewListing(listing)}>
                           <Eye size={18} />
                         </button>
-                        <button className="btn-icon" title="Edit">
+                        <button className="btn-icon" title="Edit" onClick={() => navigate(`/donor/edit/${listing.id}`)}>
                           <Edit size={18} />
                         </button>
-                        <button className="btn-icon danger" title="Delete">
+                        <button className="btn-icon danger" title="Delete" onClick={() => handleDeleteListing(listing.id)}>
                           <Trash2 size={18} />
                         </button>
                       </div>
@@ -514,6 +543,128 @@ const DonorDashboard = () => {
           )}
         </div>
       </main>
+
+      {/* Listing Detail Modal */}
+      <AnimatePresence>
+        {viewListing && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setViewListing(null)}
+          >
+            <motion.div
+              className="modal-content"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <h2>{viewListing.foodName}</h2>
+                <button className="modal-close" onClick={() => setViewListing(null)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body">
+                <div className="modal-detail-grid">
+                  <div className="modal-detail-item">
+                    <Package size={16} />
+                    <div>
+                      <span className="modal-label">Quantity</span>
+                      <span className="modal-value">{viewListing.quantity} {viewListing.unit}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <Info size={16} />
+                    <div>
+                      <span className="modal-label">Category</span>
+                      <span className="modal-value">{viewListing.category?.replace(/-/g, ' ')}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <Heart size={16} />
+                    <div>
+                      <span className="modal-label">Food Type</span>
+                      <span className="modal-value">{viewListing.foodType}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <CheckCircle size={16} />
+                    <div>
+                      <span className="modal-label">Status</span>
+                      <span className={`modal-status-badge ${viewListing.status}`}>{viewListing.status}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <Thermometer size={16} />
+                    <div>
+                      <span className="modal-label">Storage Type</span>
+                      <span className="modal-value">{viewListing.storageType || 'Not specified'}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <Calendar size={16} />
+                    <div>
+                      <span className="modal-label">Best Before</span>
+                      <span className="modal-value">{viewListing.bestBefore ? new Date(viewListing.bestBefore).toLocaleString() : '-'}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <Calendar size={16} />
+                    <div>
+                      <span className="modal-label">Available From</span>
+                      <span className="modal-value">{viewListing.availableFrom ? new Date(viewListing.availableFrom).toLocaleString() : '-'}</span>
+                    </div>
+                  </div>
+
+                  <div className="modal-detail-item">
+                    <MapPin size={16} />
+                    <div>
+                      <span className="modal-label">Pickup Location</span>
+                      <span className="modal-value">{viewListing.pickupLocation || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {viewListing.description && (
+                  <div className="modal-description">
+                    <h4>Description</h4>
+                    <p>{viewListing.description}</p>
+                  </div>
+                )}
+
+                {viewListing.handlingInstructions && (
+                  <div className="modal-description">
+                    <h4>Handling Instructions</h4>
+                    <p>{viewListing.handlingInstructions}</p>
+                  </div>
+                )}
+
+                <div className="modal-meta">
+                  Listed on {new Date(viewListing.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={() => setViewListing(null)}>Close</button>
+                <button className="btn-primary" onClick={() => { setViewListing(null); navigate(`/donor/edit/${viewListing.id}`); }}>
+                  <Edit size={16} />
+                  Edit Listing
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

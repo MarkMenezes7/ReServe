@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import L from 'leaflet';
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,6 +13,7 @@ import {
   Clock,
   Utensils,
   Image as ImageIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import './AddListingPage.css';
 
@@ -58,29 +58,15 @@ const AddListingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [mapReady, setMapReady] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
+  const [spoilagePrediction, setSpoilagePrediction] = useState<{ shelfLifeHours: number; confidence: string; riskLevel: string; tips: string[] } | null>(null);
+  const [spoilageLoading, setSpoilageLoading] = useState(false);
   const userId = localStorage.getItem('userId');
-  const mapRef = useRef<HTMLDivElement | null>(null);
-  const leafletMapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.CircleMarker | null>(null);
-
-  const defaultCenter: [number, number] = [28.6139, 77.209];
 
   useEffect(() => {
     if (!localStorage.getItem('isAuthenticated')) {
       navigate('/login');
     }
   }, [navigate]);
-
-  useEffect(() => {
-    if (currentStep === 3) {
-      // Allow layout to settle before mounting Leaflet
-      const timer = setTimeout(() => setMapReady(true), 0);
-      return () => clearTimeout(timer);
-    }
-    setMapReady(false);
-  }, [currentStep]);
 
   const [formData, setFormData] = useState<ListingData>({
     foodName: '',
@@ -108,6 +94,38 @@ const AddListingPage = () => {
     dietaryInfo: [],
     images: [],
   });
+
+  // Fetch spoilage prediction when relevant fields change
+  useEffect(() => {
+    const fetchSpoilage = async () => {
+      if (!formData.storageType || !formData.category || !formData.bestBefore) return;
+      setSpoilageLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5000/api/ml/predict/spoilage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+          body: JSON.stringify({
+            category: formData.category,
+            storageType: formData.storageType,
+            foodType: formData.foodType,
+            bestBefore: formData.bestBefore,
+            quantity: parseFloat(formData.quantity) || 1,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSpoilagePrediction(data);
+        }
+      } catch (e) {
+        console.error('Spoilage prediction error:', e);
+      } finally {
+        setSpoilageLoading(false);
+      }
+    };
+    const timer = setTimeout(fetchSpoilage, 500);
+    return () => clearTimeout(timer);
+  }, [formData.storageType, formData.category, formData.foodType, formData.bestBefore, formData.quantity]);
 
   const totalSteps = 5;
 
@@ -247,28 +265,6 @@ const AddListingPage = () => {
     '9:00 PM - 12:00 AM',
   ];
 
-  class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-    constructor(props: { children: React.ReactNode }) {
-      super(props);
-      this.state = { hasError: false };
-    }
-
-    static getDerivedStateFromError() {
-      return { hasError: true };
-    }
-
-    render() {
-      if (this.state.hasError) {
-        return (
-          <div className="map-fallback">
-            Map failed to load. Please refresh or try again.
-          </div>
-        );
-      }
-      return this.props.children;
-    }
-  }
-
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
@@ -282,9 +278,6 @@ const AddListingPage = () => {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         }));
-        if (leafletMapRef.current) {
-          leafletMapRef.current.setView([position.coords.latitude, position.coords.longitude], 13);
-        }
       },
       () => {
         alert('Unable to retrieve your location. Please allow location access.');
@@ -292,57 +285,6 @@ const AddListingPage = () => {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
-
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-
-    if (!leafletMapRef.current) {
-      try {
-        if ((mapRef.current as any)._leaflet_id) {
-          delete (mapRef.current as any)._leaflet_id;
-        }
-        const mapInstance = L.map(mapRef.current).setView(defaultCenter, 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-        }).addTo(mapInstance);
-
-        mapInstance.on('click', (e: L.LeafletMouseEvent) => {
-          setFormData(prev => ({
-            ...prev,
-            latitude: e.latlng.lat,
-            longitude: e.latlng.lng,
-          }));
-        });
-
-        leafletMapRef.current = mapInstance;
-        setTimeout(() => mapInstance.invalidateSize(), 0);
-      } catch (error: any) {
-        console.error('Leaflet init error:', error);
-        setMapError('Map failed to initialize. Please refresh.');
-      }
-    }
-
-    return () => {
-      if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
-        leafletMapRef.current = null;
-      }
-    };
-  }, [mapReady]);
-
-  useEffect(() => {
-    if (!leafletMapRef.current) return;
-    if (formData.latitude === 0 || formData.longitude === 0) return;
-
-    if (markerRef.current) {
-      markerRef.current.setLatLng([formData.latitude, formData.longitude]);
-    } else {
-      markerRef.current = L.circleMarker([formData.latitude, formData.longitude], {
-        radius: 8,
-        color: '#22c55e',
-      }).addTo(leafletMapRef.current);
-    }
-  }, [formData.latitude, formData.longitude]);
 
   return (
     <div className="add-listing-page">
@@ -468,6 +410,43 @@ const AddListingPage = () => {
                           onChange={handleInputChange}
                         />
                         <span>🌱 Vegan</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Storage / Refrigeration *</label>
+                    <p className="field-hint">This helps our ML model predict spoilage time accurately</p>
+                    <div className="radio-group">
+                      <label className={`radio-card ${formData.storageType === 'refrigerated' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="storageType"
+                          value="refrigerated"
+                          checked={formData.storageType === 'refrigerated'}
+                          onChange={handleInputChange}
+                        />
+                        <span>❄️ Refrigerated</span>
+                      </label>
+                      <label className={`radio-card ${formData.storageType === 'frozen' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="storageType"
+                          value="frozen"
+                          checked={formData.storageType === 'frozen'}
+                          onChange={handleInputChange}
+                        />
+                        <span>🧊 Frozen</span>
+                      </label>
+                      <label className={`radio-card ${formData.storageType === 'room-temperature' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="storageType"
+                          value="room-temperature"
+                          checked={formData.storageType === 'room-temperature'}
+                          onChange={handleInputChange}
+                        />
+                        <span>🌡️ Room Temperature</span>
                       </label>
                     </div>
                   </div>
@@ -625,26 +604,18 @@ const AddListingPage = () => {
                   </div>
 
                   <div className="form-group full-width">
-                    <label>Pickup Map Location (click to set marker)</label>
-                    <div className="map-picker">
-                      {mapReady ? (
-                        <MapErrorBoundary>
-                          <div ref={mapRef} className="leaflet-map">
-                            {mapError && <div className="map-fallback">{mapError}</div>}
-                          </div>
-                        </MapErrorBoundary>
-                      ) : (
-                        <div className="map-fallback">Loading map...</div>
-                      )}
-                    </div>
+                    <label>GPS Coordinates (optional)</label>
                     <div className="map-actions">
                       <button type="button" className="btn-secondary" onClick={handleUseMyLocation}>
+                        <MapPin size={16} />
                         Use My Location
                       </button>
+                      {formData.latitude !== 0 && formData.longitude !== 0 && (
+                        <span className="coordinates-display">
+                          📍 {formData.latitude.toFixed(5)}, {formData.longitude.toFixed(5)}
+                        </span>
+                      )}
                     </div>
-                    <small className="hint">
-                      Selected: {formData.latitude && formData.longitude ? `${formData.latitude.toFixed(5)}, ${formData.longitude.toFixed(5)}` : 'None'}
-                    </small>
                   </div>
 
                   <div className="form-group full-width">
@@ -714,17 +685,12 @@ const AddListingPage = () => {
 
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>Storage Type *</label>
-                    <select
-                      name="storageType"
-                      value={formData.storageType}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="refrigerated">Refrigerated</option>
-                      <option value="frozen">Frozen</option>
-                      <option value="room-temperature">Room Temperature</option>
-                    </select>
+                    <label>Storage Type</label>
+                    <div className="storage-display">
+                      {formData.storageType === 'refrigerated' ? '❄️ Refrigerated' : 
+                       formData.storageType === 'frozen' ? '🧊 Frozen' : '🌡️ Room Temperature'}
+                      <span className="storage-hint">(set in Step 1)</span>
+                    </div>
                   </div>
 
                   <div className="form-group">
@@ -784,11 +750,57 @@ const AddListingPage = () => {
                       ))}
                     </div>
                   </div>
+
+                  {/* ML Spoilage Prediction */}
+                  <div className="form-group full-width">
+                    <div className="spoilage-prediction-card">
+                      <div className="spoilage-header">
+                        <AlertTriangle size={20} />
+                        <h3>🤖 ML Spoilage Prediction</h3>
+                      </div>
+                      {spoilageLoading ? (
+                        <div className="spoilage-loading">Analyzing food data...</div>
+                      ) : spoilagePrediction ? (
+                        <div className="spoilage-content">
+                          <div className="spoilage-stats">
+                            <div className={`spoilage-risk ${spoilagePrediction.riskLevel}`}>
+                              <span className="risk-label">Risk Level</span>
+                              <span className="risk-value">{spoilagePrediction.riskLevel.toUpperCase()}</span>
+                            </div>
+                            <div className="spoilage-shelf">
+                              <span className="shelf-label">Est. Shelf Life</span>
+                              <span className="shelf-value">
+                                {spoilagePrediction.shelfLifeHours >= 24 
+                                  ? `${Math.round(spoilagePrediction.shelfLifeHours / 24)} days`
+                                  : `${spoilagePrediction.shelfLifeHours} hours`}
+                              </span>
+                            </div>
+                            <div className="spoilage-confidence">
+                              <span className="conf-label">Confidence</span>
+                              <span className="conf-value">{spoilagePrediction.confidence}</span>
+                            </div>
+                          </div>
+                          {spoilagePrediction.tips.length > 0 && (
+                            <div className="spoilage-tips">
+                              <strong>Tips:</strong>
+                              <ul>
+                                {spoilagePrediction.tips.map((tip, i) => (
+                                  <li key={i}>{tip}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="spoilage-empty">
+                          Fill in food category, storage type, and best-before date to get a prediction
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
-
-            {/* Step 5: Photos & Review */}
             {currentStep === 5 && (
               <motion.div
                 key="step5"

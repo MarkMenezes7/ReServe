@@ -1,6 +1,6 @@
 const express = require('express');
 const { db, dbRun, dbGet, dbAll } = require('../db/database');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireVerified } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -69,9 +69,9 @@ router.get('/claims/:userId', async (req, res) => {
 });
 
 // POST /api/ngo/claim
-router.post('/claim', async (req, res) => {
+router.post('/claim', requireVerified, async (req, res) => {
   try {
-    const { listingId, ngoId, scheduledTime } = req.body;
+    const { listingId, ngoId, scheduledTime, deliveryMethod, ngoLatitude, ngoLongitude } = req.body;
 
     if (!listingId || !ngoId) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -90,9 +90,32 @@ router.post('/claim', async (req, res) => {
       return res.status(400).json({ error: 'You already have an active claim on this listing' });
     }
 
+    // Calculate delivery fee if platform delivery is selected
+    let deliveryFee = 0;
+    let deliveryDistance = 0;
+    const method = deliveryMethod || 'self-pickup';
+
+    if (method === 'platform-delivery' && listing.latitude && listing.longitude && ngoLatitude && ngoLongitude) {
+      // Haversine distance calculation
+      const R = 6371; // Earth radius in km
+      const dLat = (ngoLatitude - listing.latitude) * Math.PI / 180;
+      const dLon = (ngoLongitude - listing.longitude) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(listing.latitude * Math.PI / 180) * Math.cos(ngoLatitude * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      deliveryDistance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      deliveryDistance = Math.round(deliveryDistance * 10) / 10;
+
+      // Fee: ₹30 base + ₹8/km 
+      deliveryFee = Math.round(30 + deliveryDistance * 8);
+    }
+
     const result = await dbRun(
-      'INSERT INTO claims (listingId, ngoId, scheduledTime, quantity) VALUES (?, ?, ?, ?)',
-      [listingId, ngoId, scheduledTime || null, listing.quantity]
+      `INSERT INTO claims (listingId, ngoId, scheduledTime, quantity, deliveryMethod, deliveryFee, deliveryDistance, deliveryStatus, ngoLatitude, ngoLongitude)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [listingId, ngoId, scheduledTime || null, listing.quantity, method, deliveryFee, deliveryDistance,
+       method === 'platform-delivery' ? 'pending' : null,
+       ngoLatitude || null, ngoLongitude || null]
     );
 
     await dbRun("UPDATE listings SET status = 'claimed' WHERE id = ?", [listingId]);
@@ -112,8 +135,10 @@ router.post('/claim', async (req, res) => {
     } catch (e) { /* notification failure shouldn't block claim */ }
 
     res.status(201).json({
-      message: 'Food claimed successfully',
-      claim: { id: result.lastID, listingId, ngoId, status: 'pending' },
+      message: method === 'platform-delivery' 
+        ? `Food claimed with platform delivery! Fee: ₹${deliveryFee} (${deliveryDistance} km)`
+        : 'Food claimed successfully! You can now coordinate pickup with the donor.',
+      claim: { id: result.lastID, listingId, ngoId, status: 'pending', deliveryMethod: method, deliveryFee, deliveryDistance },
     });
   } catch (error) {
     console.error('Claim error:', error);

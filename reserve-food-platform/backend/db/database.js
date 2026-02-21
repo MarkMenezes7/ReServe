@@ -202,6 +202,12 @@ function initializeDatabase() {
         if (!colNames.includes('profileImage')) {
           db.run("ALTER TABLE users ADD COLUMN profileImage TEXT", () => {});
         }
+        if (!colNames.includes('latitude')) {
+          db.run("ALTER TABLE users ADD COLUMN latitude REAL", () => {});
+        }
+        if (!colNames.includes('longitude')) {
+          db.run("ALTER TABLE users ADD COLUMN longitude REAL", () => {});
+        }
       }
     });
 
@@ -230,6 +236,24 @@ function initializeDatabase() {
         }
         if (!colNames.includes('proofImage')) {
           db.run("ALTER TABLE claims ADD COLUMN proofImage TEXT", () => {});
+        }
+        if (!colNames.includes('deliveryMethod')) {
+          db.run("ALTER TABLE claims ADD COLUMN deliveryMethod TEXT DEFAULT 'self-pickup'", () => {});
+        }
+        if (!colNames.includes('deliveryFee')) {
+          db.run("ALTER TABLE claims ADD COLUMN deliveryFee REAL DEFAULT 0", () => {});
+        }
+        if (!colNames.includes('deliveryStatus')) {
+          db.run("ALTER TABLE claims ADD COLUMN deliveryStatus TEXT DEFAULT NULL", () => {});
+        }
+        if (!colNames.includes('deliveryDistance')) {
+          db.run("ALTER TABLE claims ADD COLUMN deliveryDistance REAL DEFAULT 0", () => {});
+        }
+        if (!colNames.includes('ngoLatitude')) {
+          db.run("ALTER TABLE claims ADD COLUMN ngoLatitude REAL", () => {});
+        }
+        if (!colNames.includes('ngoLongitude')) {
+          db.run("ALTER TABLE claims ADD COLUMN ngoLongitude REAL", () => {});
         }
       }
     });

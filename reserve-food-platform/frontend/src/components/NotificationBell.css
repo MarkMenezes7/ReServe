@@ -8,14 +8,14 @@
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
-  color: rgba(255, 255, 255, 0.7);
+  color: #6b7280;
   position: relative;
   transition: background 0.2s, color 0.2s;
 }
 
 .notification-bell-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  background: #f0fdf4;
+  color: #059669;
 }
 
 .notification-badge {
@@ -42,11 +42,10 @@
   right: 0;
   width: 340px;
   max-height: 420px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   z-index: 1000;
   overflow: hidden;
   animation: notifSlideIn 0.2s ease-out;
@@ -57,20 +56,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .notification-dropdown-header h4 {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #111827;
 }
 
 .notification-mark-all {
   background: none;
   border: none;
-  color: #4ade80;
+  color: #059669;
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -100,47 +99,47 @@
 
 .notification-item {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid #f3f4f6;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .notification-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f0fdf4;
 }
 
 .notification-unread {
-  background: rgba(34, 197, 94, 0.08);
-  border-left: 3px solid #22c55e;
+  background: #ecfdf5;
+  border-left: 3px solid #10b981;
 }
 
 .notification-unread:hover {
-  background: rgba(34, 197, 94, 0.12);
+  background: #d1fae5;
 }
 
 .notification-item-title {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #111827;
   margin-bottom: 2px;
 }
 
 .notification-item-message {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #6b7280;
   line-height: 1.4;
 }
 
 .notification-item-time {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: #9ca3af;
   margin-top: 4px;
 }
 
 .notification-empty {
   padding: 30px 16px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: #9ca3af;
   font-size: 0.85rem;
 }
 

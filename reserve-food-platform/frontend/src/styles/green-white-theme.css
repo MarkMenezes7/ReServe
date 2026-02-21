@@ -1,0 +1,999 @@
+/* ===== GREEN & WHITE THEME OVERRIDE ===== */
+/* Converts all dark-themed pages to light green & white */
+/* This file overrides the dark backgrounds, text colors, and card styles */
+
+/* ===== PAGE BACKGROUNDS ===== */
+.donor-dashboard,
+.ngo-dashboard,
+.chat-page,
+.review-page,
+.add-listing-page,
+.da-page,
+.donor-history,
+.edit-listing-page,
+.donor-profile,
+.ngo-forecast,
+.ngo-impact,
+.ngo-map-page,
+.support-page,
+.su-page {
+  background: #f0fdf4 !important;
+}
+
+/* ===== SIDEBAR ===== */
+.dashboard-sidebar,
+.chat-sidebar {
+  background: linear-gradient(180deg, #047857, #059669) !important;
+  backdrop-filter: none !important;
+  border-right: none !important;
+}
+
+.dashboard-sidebar .logo-icon,
+.chat-sidebar .logo-icon {
+  color: #6ee7b7 !important;
+}
+
+.dashboard-sidebar .logo-text,
+.chat-sidebar .logo-text {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: white !important;
+}
+
+.dashboard-sidebar .close-sidebar {
+  color: white !important;
+}
+
+.dashboard-sidebar .user-info {
+  background: rgba(255,255,255,0.15) !important;
+}
+
+.dashboard-sidebar .user-details h3 {
+  color: white !important;
+}
+
+.dashboard-sidebar .user-badge {
+  background: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+.dashboard-sidebar .nav-item {
+  color: rgba(255,255,255,0.75) !important;
+}
+
+.dashboard-sidebar .nav-item:hover {
+  background: rgba(255,255,255,0.15) !important;
+  color: white !important;
+}
+
+.dashboard-sidebar .nav-item.active {
+  background: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+.dashboard-sidebar .logout-btn {
+  background: rgba(255,255,255,0.1) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+
+.dashboard-sidebar .logout-btn:hover {
+  background: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+/* ===== TOP BAR ===== */
+.top-bar .menu-btn,
+.chat-header-bar .chat-back-btn {
+  color: #374151 !important;
+}
+
+.top-bar .page-title,
+.chat-header-bar .chat-page-title,
+.page-title {
+  color: #111827 !important;
+}
+
+.top-bar .welcome-text {
+  color: #6b7280 !important;
+}
+
+/* ===== STAT CARDS ===== */
+.stat-card {
+  background: white !important;
+  backdrop-filter: none !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.stat-icon-wrapper.bg-green {
+  background: #d1fae5 !important;
+}
+
+.stat-icon-wrapper.bg-blue {
+  background: #dbeafe !important;
+}
+
+.stat-icon-wrapper.bg-orange {
+  background: #ffedd5 !important;
+}
+
+.stat-icon-wrapper.bg-purple {
+  background: #ede9fe !important;
+}
+
+.stat-icon {
+  color: inherit !important;
+}
+
+.stat-icon-wrapper.bg-green .stat-icon { color: #059669 !important; }
+.stat-icon-wrapper.bg-blue .stat-icon { color: #2563eb !important; }
+.stat-icon-wrapper.bg-orange .stat-icon { color: #ea580c !important; }
+.stat-icon-wrapper.bg-purple .stat-icon { color: #7c3aed !important; }
+
+.stat-value {
+  color: #111827 !important;
+}
+
+.stat-label {
+  color: #6b7280 !important;
+}
+
+/* ===== CONTENT SECTIONS ===== */
+.overview-section,
+.listings-section,
+.claims-section {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+.section-title {
+  color: #111827 !important;
+}
+
+.section-subtitle {
+  color: #6b7280 !important;
+}
+
+/* ===== ACTION CARDS ===== */
+.action-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  transition: all 0.2s !important;
+}
+
+.action-card:hover {
+  border-color: #10b981 !important;
+  background: #f0fdf4 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1) !important;
+}
+
+.action-icon {
+  color: #059669 !important;
+}
+
+.action-card h3 {
+  color: #111827 !important;
+}
+
+.action-card p {
+  color: #6b7280 !important;
+}
+
+/* ===== ACTIVITY ITEMS ===== */
+.activity-item {
+  background: #f9fafb !important;
+  border: 1px solid #f3f4f6 !important;
+}
+
+.activity-details h4 {
+  color: #111827 !important;
+}
+
+.activity-details p {
+  color: #6b7280 !important;
+}
+
+.activity-time {
+  color: #9ca3af !important;
+}
+
+.activity-status.status-active { background: #d1fae5 !important; }
+.activity-status.status-claimed { background: #fef3c7 !important; }
+.activity-status.status-collected { background: #dbeafe !important; }
+.activity-status.status-expired { background: #fee2e2 !important; }
+
+/* ===== TABLES / LISTINGS ===== */
+.listings-table,
+.listings-grid,
+.claims-grid {
+  color: #374151 !important;
+}
+
+.listing-row,
+.listing-card,
+.claim-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  color: #374151 !important;
+}
+
+.listing-row:hover,
+.listing-card:hover,
+.claim-card:hover {
+  border-color: #10b981 !important;
+  background: #f0fdf4 !important;
+}
+
+.listing-title,
+.listing-name,
+.claim-title,
+.listing-row h4 {
+  color: #111827 !important;
+}
+
+.listing-meta,
+.listing-details,
+.claim-details,
+.listing-row p,
+.listing-row span {
+  color: #6b7280 !important;
+}
+
+/* ===== FILTER SELECTS ===== */
+.filter-select,
+.filter-btn,
+.search-input {
+  background: white !important;
+  border: 1px solid #d1d5db !important;
+  color: #374151 !important;
+  border-radius: 8px !important;
+}
+
+.filter-select:focus,
+.search-input:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.filter-select option {
+  background: white !important;
+  color: #374151 !important;
+}
+
+/* ===== BADGES / STATUS ===== */
+.listing-status.active,
+.claim-status.active,
+.status-badge.active {
+  background: #d1fae5 !important;
+  color: #059669 !important;
+}
+
+.listing-status.claimed,
+.claim-status.claimed,
+.status-badge.claimed,
+.claim-status.pending,
+.status-badge.pending {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+}
+
+.listing-status.collected,
+.claim-status.collected,
+.status-badge.collected {
+  background: #dbeafe !important;
+  color: #2563eb !important;
+}
+
+.listing-status.expired,
+.claim-status.expired,
+.status-badge.expired,
+.listing-status.cancelled,
+.claim-status.cancelled,
+.status-badge.cancelled {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary,
+.btn-add-listing,
+.action-btn.primary {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-primary:hover,
+.btn-add-listing:hover,
+.action-btn.primary:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+.btn-secondary,
+.action-btn.secondary {
+  background: white !important;
+  color: #059669 !important;
+  border: 1px solid #10b981 !important;
+}
+
+.btn-delete,
+.action-btn.danger,
+.btn-danger {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border: none !important;
+}
+
+/* ===== HEADINGS & TEXT (general overrides) ===== */
+.recent-activity h3,
+.listings-header h2,
+.claims-header h2 {
+  color: #111827 !important;
+}
+
+/* ===== CHAT PAGE ===== */
+.chat-container {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.chat-header-bar {
+  background: white !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.chat-page {
+  background: #f0fdf4 !important;
+}
+
+.chat-sidebar {
+  background: white !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+.conversation-card {
+  background: white !important;
+  border: 1px solid #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.conversation-card:hover,
+.conversation-card.active {
+  background: #f0fdf4 !important;
+  border-color: #10b981 !important;
+}
+
+.conversation-card .conversation-name,
+.conversation-card h4 {
+  color: #111827 !important;
+}
+
+.conversation-card .conversation-preview,
+.conversation-card p {
+  color: #6b7280 !important;
+}
+
+.conversation-card .conversation-time,
+.conversation-card .time {
+  color: #9ca3af !important;
+}
+
+.chat-messages-area {
+  background: #f9fafb !important;
+}
+
+.chat-message.sent .message-bubble {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+.chat-message.received .message-bubble {
+  background: white !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.chat-input-area {
+  background: white !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+.chat-input {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.chat-input:focus {
+  border-color: #10b981 !important;
+}
+
+.chat-send-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+.chat-empty-state {
+  color: #6b7280 !important;
+}
+
+.chat-empty-state h3 {
+  color: #374151 !important;
+}
+
+/* ===== REVIEW PAGE ===== */
+.review-container,
+.review-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+}
+
+.review-header h1,
+.review-header h2 {
+  color: #111827 !important;
+}
+
+.review-header p,
+.review-subtitle {
+  color: #6b7280 !important;
+}
+
+.review-label {
+  color: #374151 !important;
+}
+
+.review-textarea,
+.review-input {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.review-textarea:focus,
+.review-input:focus {
+  border-color: #10b981 !important;
+}
+
+.review-submit-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+.review-loading {
+  color: #6b7280 !important;
+}
+
+.spinner-icon {
+  color: #10b981 !important;
+}
+
+/* ===== ADD LISTING PAGE ===== */
+.add-listing-page .page-header .back-button {
+  color: #059669 !important;
+  border: 1px solid #d1fae5 !important;
+  background: white !important;
+}
+
+.add-listing-page .page-header .back-button:hover {
+  background: #d1fae5 !important;
+}
+
+.add-listing-page .page-title {
+  color: #111827 !important;
+}
+
+.add-listing-page .page-subtitle {
+  color: #6b7280 !important;
+}
+
+.add-listing-page .progress-step {
+  color: #9ca3af !important;
+}
+
+.add-listing-page .progress-step.active {
+  color: #059669 !important;
+}
+
+.add-listing-page .progress-step.completed {
+  color: #059669 !important;
+}
+
+.form-card,
+.listing-form {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+.form-group label,
+.form-label {
+  color: #374151 !important;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select,
+.form-input,
+.form-textarea,
+.form-select {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.form-btn,
+.submit-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+/* ===== ANALYTICS PAGE ===== */
+.da-page {
+  color: #374151 !important;
+}
+
+.da-header h1,
+.da-header-title {
+  color: #111827 !important;
+}
+
+.da-header p,
+.da-header-subtitle {
+  color: #6b7280 !important;
+}
+
+.da-hero,
+.da-card,
+.analytics-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+.da-hero-number,
+.da-stat-value {
+  color: #111827 !important;
+}
+
+.da-hero-label,
+.da-stat-label,
+.da-hero p {
+  color: #6b7280 !important;
+}
+
+.da-refresh-btn {
+  background: white !important;
+  color: #059669 !important;
+  border: 1px solid #d1fae5 !important;
+}
+
+.da-refresh-btn:hover {
+  background: #d1fae5 !important;
+}
+
+.da-loading,
+.da-empty {
+  color: #6b7280 !important;
+}
+
+/* ===== HISTORY PAGE ===== */
+.history-title {
+  color: #111827 !important;
+}
+
+.history-subtitle {
+  color: #6b7280 !important;
+}
+
+.history-export-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+.history-card,
+.history-item {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+}
+
+.history-card h4,
+.history-item h4 {
+  color: #111827 !important;
+}
+
+.history-card p,
+.history-item p,
+.history-meta {
+  color: #6b7280 !important;
+}
+
+.history-loading,
+.history-empty {
+  color: #6b7280 !important;
+}
+
+.history-empty h3 {
+  color: #374151 !important;
+}
+
+.history-spinner {
+  color: #10b981 !important;
+}
+
+/* Summary stats */
+.summary-card,
+.summary-stat {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+}
+
+.summary-card h3,
+.summary-stat .value {
+  color: #111827 !important;
+}
+
+.summary-card p,
+.summary-stat .label {
+  color: #6b7280 !important;
+}
+
+/* ===== PROFILE PAGE ===== */
+.profile-card,
+.profile-section,
+.profile-form {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+.profile-header h1,
+.profile-name {
+  color: #111827 !important;
+}
+
+.profile-header p,
+.profile-email,
+.profile-meta {
+  color: #6b7280 !important;
+}
+
+.profile-avatar {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+.profile-save-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+/* ===== NGO SPECIFIC ===== */
+.ngo-dashboard .browse-header h2,
+.ngo-dashboard .claims-header h2 {
+  color: #111827 !important;
+}
+
+.browse-card,
+.food-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+}
+
+.browse-card:hover,
+.food-card:hover {
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1) !important;
+}
+
+.browse-card h3,
+.food-card h3 {
+  color: #111827 !important;
+}
+
+.browse-card p,
+.food-card p {
+  color: #6b7280 !important;
+}
+
+.claim-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+/* ===== NGO FORECAST PAGE ===== */
+.forecast-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+}
+
+.forecast-card h3,
+.forecast-title {
+  color: #111827 !important;
+}
+
+.forecast-card p,
+.forecast-desc {
+  color: #6b7280 !important;
+}
+
+/* ===== NGO IMPACT DASHBOARD ===== */
+.impact-card,
+.impact-stat {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+}
+
+.impact-card h3,
+.impact-stat .value {
+  color: #111827 !important;
+}
+
+.impact-card p,
+.impact-stat .label {
+  color: #6b7280 !important;
+}
+
+/* ===== NGO MAP PAGE ===== */
+.map-controls,
+.map-sidebar-panel,
+.map-legend {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.map-controls h3,
+.map-sidebar-panel h3 {
+  color: #111827 !important;
+}
+
+/* ===== SUPPORT US PAGE ===== */
+.support-page,
+.su-page {
+  color: #374151 !important;
+}
+
+.su-page {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 30%, #ecfdf5 60%, #d1fae5 100%) !important;
+}
+
+.su-bg-orbs {
+  display: none !important;
+}
+
+.su-hero h1,
+.su-hero-line1,
+.su-hero-line2 {
+  color: #111827 !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.su-hero p,
+.su-hero-sub {
+  color: #6b7280 !important;
+}
+
+.su-stat-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.su-stat-value {
+  color: #111827 !important;
+}
+
+.su-stat-label {
+  color: #6b7280 !important;
+}
+
+.su-section-title {
+  color: #111827 !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.su-section-sub {
+  color: #6b7280 !important;
+}
+
+.su-tier-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.su-tier-name {
+  color: #111827 !important;
+}
+
+.su-tier-price {
+  color: #059669 !important;
+}
+
+.su-tier-desc,
+.su-tier-features li {
+  color: #6b7280 !important;
+}
+
+.su-faq-item {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.su-faq-question {
+  color: #111827 !important;
+}
+
+.su-faq-answer {
+  color: #6b7280 !important;
+}
+
+.su-gratitude-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.su-gratitude-name {
+  color: #111827 !important;
+}
+
+.su-gratitude-message {
+  color: #6b7280 !important;
+}
+
+.su-contact-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.su-contact-card label {
+  color: #374151 !important;
+}
+
+.su-contact-card input,
+.su-contact-card textarea,
+.su-contact-card select {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.su-contact-card input:focus,
+.su-contact-card textarea:focus,
+.su-contact-card select:focus {
+  border-color: #10b981 !important;
+}
+
+/* ===== NOT FOUND & SIMPLE PAGES ===== */
+.not-found,
+.simple-page {
+  background: linear-gradient(135deg, #f9fafb, #ecfdf5, #d1fae5) !important;
+}
+
+.not-found-card,
+.simple-card {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.not-found-link,
+.simple-link {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+/* ===== LOADING STATES ===== */
+.loading-spinner,
+.spinner {
+  border-color: #d1fae5 !important;
+  border-top-color: #10b981 !important;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0fdf4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a7f3d0;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6ee7b7;
+}
+
+/* ===== MODAL / DIALOG ===== */
+.modal-overlay {
+  background: rgba(0,0,0,0.4) !important;
+}
+
+.modal-content,
+.dialog-content {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.modal-header h2,
+.dialog-title {
+  color: #111827 !important;
+}
+
+/* ===== TOAST OVERRIDES ===== */
+.toast {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.toast.toast-success {
+  border-left: 4px solid #10b981 !important;
+}
+
+.toast.toast-error {
+  border-left: 4px solid #ef4444 !important;
+}
+
+/* ===== BACK BUTTONS ===== */
+.back-button,
+.back-btn {
+  color: #059669 !important;
+  background: white !important;
+  border: 1px solid #d1fae5 !important;
+}
+
+.back-button:hover,
+.back-btn:hover {
+  background: #d1fae5 !important;
+}
+
+/* ===== EDIT LISTING PAGE ===== */
+.edit-listing-page .page-title {
+  color: #111827 !important;
+}
+
+.edit-listing-page .page-subtitle {
+  color: #6b7280 !important;
+}

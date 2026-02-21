@@ -1,113 +1,392 @@
-/* NGOImpactDashboard.css - Impact Story Dark Theme */
-
-.ip-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; color: rgba(255,255,255,0.5); }
-.ip-loading-icon { color: #fbbf24; animation: ipPulse 2s ease-in-out infinite; }
-@keyframes ipPulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.1); } }
-
-.ip-page { max-width: 1100px; padding-bottom: 40px; }
-
-.ip-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.ip-header-icon {
-  width: 48px; height: 48px; border-radius: 14px;
-  background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.1));
-  border: 1px solid rgba(251,191,36,0.25);
-  display: flex; align-items: center; justify-content: center; color: #fbbf24;
+/* ===== NGO Impact Dashboard - Green & White Theme ===== */
+.ip-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+  padding: 2rem 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
 }
-.ip-header h1 { font-size: 1.5rem; font-weight: 700; color: #e2e8f0; margin: 0; }
-.ip-header p { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin: 4px 0 0; }
 
+/* Header */
+.ip-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.ip-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.25rem;
+}
+
+.ip-header p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ===== Hero (Total Food Rescued) ===== */
 .ip-hero {
-  text-align: center; padding: 40px 30px; margin-bottom: 24px; border-radius: 20px;
-  background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,185,129,0.05));
-  border: 1px solid rgba(34,197,94,0.15);
+  background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
-.ip-hero-number { font-size: 3.5rem; font-weight: 800; color: #4ade80; line-height: 1; }
-.ip-hero-label { font-size: 1rem; color: rgba(255,255,255,0.5); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
-.ip-hero-sub { font-size: 0.9rem; color: rgba(255,255,255,0.35); margin-top: 6px; }
 
-.ip-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.ip-hero-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 0.5rem;
+}
+
+.ip-hero-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #047857;
+  margin: 0 0 0.25rem;
+}
+
+.ip-hero-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ===== Stats Grid ===== */
+.ip-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .ip-stat-card {
-  background: rgba(255,255,255,0.04); backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; text-align: center;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem;
+  text-align: center;
+  transition: all 0.15s;
 }
-.ip-stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
-.ip-stat-icon.green { background: rgba(34,197,94,0.15); color: #4ade80; }
-.ip-stat-icon.blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
-.ip-stat-icon.orange { background: rgba(245,158,11,0.15); color: #fbbf24; }
-.ip-stat-value { font-size: 1.8rem; font-weight: 700; color: #e2e8f0; }
-.ip-stat-label { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
 
-.ip-equiv-section { margin-bottom: 24px; }
-.ip-equiv-section h2 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #e2e8f0; margin: 0 0 16px; }
-.ip-equiv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.ip-stat-card:hover {
+  border-color: #a7f3d0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.ip-stat-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ip-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.2rem;
+}
+
+.ip-stat-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ===== Equivalences ===== */
+.ip-equivalences {
+  margin-bottom: 1.5rem;
+}
+
+.ip-equivalences h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1rem;
+}
+
+.ip-equiv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
 .ip-equiv-card {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px; padding: 28px 20px; text-align: center;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem;
+  text-align: center;
+  transition: all 0.15s;
 }
-.ip-equiv-icon { margin: 0 auto 12px; display: block; }
-.ip-equiv-icon.green { color: #4ade80; }
-.ip-equiv-icon.blue { color: #60a5fa; }
-.ip-equiv-icon.cyan { color: #22d3ee; }
-.ip-equiv-value { font-size: 2rem; font-weight: 800; color: #e2e8f0; }
-.ip-equiv-label { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 6px; line-height: 1.4; }
 
-.ip-comparison { margin-bottom: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; }
-.ip-comparison h2 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #e2e8f0; margin: 0 0 20px; }
-.ip-compare-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.ip-compare-item { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.ip-compare-ring { position: relative; display: flex; align-items: center; justify-content: center; }
-.ip-circle-svg { display: block; }
-.ip-compare-pct { position: absolute; font-size: 0.9rem; font-weight: 700; color: #e2e8f0; }
-.ip-compare-info { text-align: center; }
-.ip-compare-label { display: block; font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.6); }
-.ip-compare-values { display: block; font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 2px; }
+.ip-equiv-card:hover {
+  border-color: #a7f3d0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
 
-.ip-milestones { margin-bottom: 24px; }
-.ip-milestones h2 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #e2e8f0; margin: 0 0 16px; }
-.ip-milestone-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.ip-equiv-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.ip-equiv-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.15rem;
+}
+
+.ip-equiv-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ===== Comparison Section ===== */
+.ip-comparison {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ip-comparison h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1rem;
+}
+
+.ip-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.ip-compare-item {
+  text-align: center;
+}
+
+.ip-compare-circle {
+  margin-bottom: 0.75rem;
+}
+
+.ip-compare-circle svg {
+  width: 80px;
+  height: 80px;
+}
+
+.ip-compare-circle .circle-bg {
+  stroke: #e5e7eb;
+}
+
+.ip-compare-circle .circle-fill {
+  stroke: #22c55e;
+}
+
+.ip-compare-pct {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.ip-compare-label {
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 500;
+  margin: 2px 0 0;
+}
+
+.ip-compare-values {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin: 2px 0 0;
+}
+
+/* ===== Milestones ===== */
+.ip-milestones {
+  margin-bottom: 1.5rem;
+}
+
+.ip-milestones h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1rem;
+}
+
+.ip-milestone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .ip-milestone-card {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px; padding: 16px 12px; text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  transition: all 0.15s;
 }
-.ip-milestone-achieved { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
+
+.ip-milestone-card:hover {
+  border-color: #a7f3d0;
+}
+
 .ip-milestone-icon-wrap {
-  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 8px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4);
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 1.1rem;
 }
-.ip-milestone-achieved .ip-milestone-icon-wrap { background: rgba(34,197,94,0.15); color: #4ade80; }
-.ip-milestone-label { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-bottom: 8px; line-height: 1.3; }
-.ip-milestone-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-.ip-milestone-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #4ade80); border-radius: 2px; }
-.ip-milestone-status { font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.35); }
-.ip-milestone-achieved .ip-milestone-status { color: #4ade80; }
 
-.ip-insights { margin-bottom: 24px; }
-.ip-insights h2 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #e2e8f0; margin: 0 0 16px; }
-.ip-insights-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-.ip-insight-card { padding: 16px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
-.ip-insight-title { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; margin-bottom: 6px; }
-.ip-insight-desc { font-size: 0.78rem; color: rgba(255,255,255,0.5); line-height: 1.5; }
-.ip-insight-green { border-left: 3px solid #4ade80; }
-.ip-insight-blue { border-left: 3px solid #60a5fa; }
-.ip-insight-purple { border-left: 3px solid #c084fc; }
-.ip-insight-emerald { border-left: 3px solid #34d399; }
-.ip-insight-orange { border-left: 3px solid #fb923c; }
-.ip-insight-gold { border-left: 3px solid #fbbf24; }
+.ip-milestone-achieved .ip-milestone-icon-wrap {
+  background: #d1fae5;
+  color: #059669;
+}
 
-.ip-facts { }
-.ip-facts h2 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #e2e8f0; margin: 0 0 16px; }
-.ip-facts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.ip-milestone-info {
+  flex: 1;
+}
+
+.ip-milestone-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.1rem;
+}
+
+.ip-milestone-status {
+  font-size: 0.76rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ip-milestone-achieved .ip-milestone-label {
+  color: #059669;
+}
+
+.ip-milestone-achieved .ip-milestone-status {
+  color: #10b981;
+}
+
+/* ===== Insights ===== */
+.ip-insights {
+  margin-bottom: 1.5rem;
+}
+
+.ip-insights h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1rem;
+}
+
+.ip-insight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ip-insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.ip-insight-icon {
+  font-size: 1.3rem;
+  min-width: 28px;
+  text-align: center;
+}
+
+.ip-insight-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.15rem;
+}
+
+.ip-insight-desc {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ===== Fun Fact ===== */
 .ip-fact-card {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px; padding: 20px 16px; text-align: center;
+  background: white;
+  border: 1px solid #d1fae5;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
-.ip-fact-number { font-size: 1.8rem; font-weight: 800; color: #fbbf24; margin-bottom: 6px; }
-.ip-fact-text { font-size: 0.78rem; color: rgba(255,255,255,0.45); line-height: 1.4; }
 
-@media (max-width: 900px) {
-  .ip-stats-grid { grid-template-columns: 1fr; }
-  .ip-equiv-grid { grid-template-columns: 1fr; }
-  .ip-compare-grid { grid-template-columns: 1fr; }
-  .ip-milestone-grid { grid-template-columns: repeat(2, 1fr); }
-  .ip-facts-grid { grid-template-columns: repeat(2, 1fr); }
+.ip-fact-icon {
+  font-size: 1.5rem;
+  min-width: 28px;
+}
+
+.ip-fact-text {
+  font-size: 0.88rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ===== Loading ===== */
+.ip-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .ip-page {
+    padding: 1rem;
+  }
+
+  .ip-hero-value {
+    font-size: 2rem;
+  }
+
+  .ip-stats-grid,
+  .ip-equiv-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ip-compare-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }

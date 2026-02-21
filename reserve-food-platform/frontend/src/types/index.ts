@@ -143,15 +143,24 @@ export interface NGOStats {
 
 export interface AdminStats {
   totalUsers: number;
-  totalDonors: number;
-  totalNGOs: number;
+  totalDonors?: number;
+  totalNGOs?: number;
+  donors?: number;
+  ngos?: number;
   totalListings: number;
   activeListings: number;
   totalClaims: number;
-  collectedClaims: number;
-  totalReviews: number;
-  totalFoodSaved: number;
-  totalMessages: number;
+  collectedClaims?: number;
+  collected?: number;
+  totalReviews?: number;
+  totalFoodSaved?: number;
+  foodSaved?: number;
+  totalMessages?: number;
+  mealsProvided?: number;
+  co2Saved?: number;
+  newUsersMonth?: number;
+  pendingVerifications?: number;
+  successRate?: number;
 }
 
 export interface ImpactStats {

@@ -42,6 +42,20 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// GET /api/admin/pending-verifications
+router.get('/pending-verifications', async (req, res) => {
+  try {
+    const pending = await dbAll(
+      `SELECT id, name, email, userType, organizationName, phone, address, city, state, pincode, createdAt 
+       FROM users WHERE isVerified = 0 AND isActive = 1 AND userType != 'admin' ORDER BY createdAt DESC`
+    );
+    res.json(pending);
+  } catch (error) {
+    console.error('Pending verifications error:', error);
+    res.status(500).json({ error: 'Failed to fetch pending verifications' });
+  }
+});
+
 // GET /api/admin/users
 router.get('/users', async (req, res) => {
   try {
@@ -346,6 +360,114 @@ router.get('/reports/impact', async (req, res) => {
   } catch (error) {
     console.error('Impact report error:', error);
     res.status(500).json({ error: 'Failed to generate impact report' });
+  }
+});
+
+// ===================== DELIVERY MANAGEMENT =====================
+
+// GET /api/admin/deliveries - all platform delivery claims
+router.get('/deliveries', async (req, res) => {
+  try {
+    const { status } = req.query;
+    let where = "WHERE c.deliveryMethod = 'platform-delivery'";
+    if (status && status !== 'all') where += ` AND c.deliveryStatus = '${status}'`;
+
+    const deliveries = await dbAll(`
+      SELECT c.id, c.listingId, c.ngoId, c.status as claimStatus, c.deliveryMethod, c.deliveryFee,
+             c.deliveryDistance, c.deliveryStatus, c.scheduledTime, c.createdAt,
+             c.ngoLatitude, c.ngoLongitude,
+             l.foodName, l.quantity, l.unit, l.pickupLocation, l.latitude as pickupLat, l.longitude as pickupLng,
+             l.category, l.storageType,
+             donor.name as donorName, donor.organizationName as donorOrg, donor.phone as donorPhone,
+             ngo.name as ngoName, ngo.organizationName as ngoOrg, ngo.phone as ngoPhone
+      FROM claims c
+      JOIN listings l ON c.listingId = l.id
+      JOIN users donor ON l.donorId = donor.id
+      JOIN users ngo ON c.ngoId = ngo.id
+      ${where}
+      ORDER BY c.createdAt DESC
+    `);
+    res.json(deliveries);
+  } catch (error) {
+    console.error('Deliveries fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch deliveries' });
+  }
+});
+
+// GET /api/admin/delivery-stats
+router.get('/delivery-stats', async (req, res) => {
+  try {
+    const total = await dbGet("SELECT COUNT(*) as count FROM claims WHERE deliveryMethod = 'platform-delivery'");
+    const pending = await dbGet("SELECT COUNT(*) as count FROM claims WHERE deliveryMethod = 'platform-delivery' AND deliveryStatus = 'pending'");
+    const inTransit = await dbGet("SELECT COUNT(*) as count FROM claims WHERE deliveryMethod = 'platform-delivery' AND deliveryStatus = 'in-transit'");
+    const delivered = await dbGet("SELECT COUNT(*) as count FROM claims WHERE deliveryMethod = 'platform-delivery' AND deliveryStatus = 'delivered'");
+    const totalRevenue = await dbGet("SELECT COALESCE(SUM(deliveryFee), 0) as total FROM claims WHERE deliveryMethod = 'platform-delivery'");
+    const avgDistance = await dbGet("SELECT COALESCE(AVG(deliveryDistance), 0) as avg FROM claims WHERE deliveryMethod = 'platform-delivery' AND deliveryDistance > 0");
+
+    res.json({
+      total: total.count,
+      pending: pending.count,
+      inTransit: inTransit.count,
+      delivered: delivered.count,
+      totalRevenue: totalRevenue.total,
+      avgDistance: Math.round((avgDistance.avg || 0) * 10) / 10,
+    });
+  } catch (error) {
+    console.error('Delivery stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch delivery stats' });
+  }
+});
+
+// PATCH /api/admin/deliveries/:claimId/status - update delivery status
+router.patch('/deliveries/:claimId/status', async (req, res) => {
+  try {
+    const { claimId } = req.params;
+    const { deliveryStatus } = req.body;
+
+    if (!['pending', 'assigned', 'in-transit', 'delivered', 'failed'].includes(deliveryStatus)) {
+      return res.status(400).json({ error: 'Invalid delivery status' });
+    }
+
+    const claim = await dbGet(`
+      SELECT c.*, l.foodName FROM claims c JOIN listings l ON c.listingId = l.id WHERE c.id = ?
+    `, [claimId]);
+
+    if (!claim) return res.status(404).json({ error: 'Claim not found' });
+
+    await dbRun('UPDATE claims SET deliveryStatus = ? WHERE id = ?', [deliveryStatus, claimId]);
+
+    // If delivered, also mark claim as collected
+    if (deliveryStatus === 'delivered') {
+      await dbRun("UPDATE claims SET status = 'collected', collectedAt = datetime('now') WHERE id = ?", [claimId]);
+      await dbRun("UPDATE listings SET status = 'collected' WHERE id = ?", [claim.listingId]);
+    }
+
+    // Notify NGO
+    const { createNotification } = require('../utils/notifications');
+    const io = req.app.get('io');
+    const statusMessages = {
+      'assigned': 'A delivery partner has been assigned',
+      'in-transit': 'Your food is on the way!',
+      'delivered': 'Food has been delivered successfully',
+      'failed': 'Delivery failed — please contact support',
+    };
+    if (statusMessages[deliveryStatus]) {
+      try {
+        await createNotification(io, {
+          userId: claim.ngoId,
+          type: 'delivery_update',
+          title: `Delivery ${deliveryStatus.replace('-', ' ')}`,
+          message: `${statusMessages[deliveryStatus]} for "${claim.foodName}"`,
+          relatedId: parseInt(claimId),
+          relatedType: 'claim',
+        });
+      } catch (e) { /* non-critical */ }
+    }
+
+    res.json({ message: `Delivery status updated to ${deliveryStatus}` });
+  } catch (error) {
+    console.error('Delivery status update error:', error);
+    res.status(500).json({ error: 'Failed to update delivery status' });
   }
 });
 

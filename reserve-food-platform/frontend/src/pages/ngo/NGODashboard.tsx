@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,8 +18,12 @@ import {
     Menu,
     X,
     MessageCircle,
+    Truck,
+    Navigation,
+    DollarSign,
   } from 'lucide-react';
 import './NGODashboard.css';
+import VerificationBanner from '../../components/common/VerificationBanner';
 
 interface Stats {
   totalCollections: number;
@@ -41,6 +45,9 @@ interface Listing {
   donorName: string;
   organizationName: string;
   status: string;
+  latitude?: number;
+  longitude?: number;
+  storageType?: string;
 }
 
 interface Claim {
@@ -54,6 +61,10 @@ interface Claim {
   scheduledTime: string;
   pickupLocation: string;
   phone: string;
+  deliveryMethod?: string;
+  deliveryFee?: number;
+  deliveryDistance?: number;
+  deliveryStatus?: string;
 }
 
 const NGODashboard = () => {
@@ -71,6 +82,11 @@ const NGODashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [claimModal, setClaimModal] = useState<Listing | null>(null);
+  const [deliveryMethod, setDeliveryMethod] = useState<'self-pickup' | 'platform-delivery'>('self-pickup');
+  const [ngoLocation, setNgoLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [estimatedFee, setEstimatedFee] = useState(0);
+  const [claimLoading, setClaimLoading] = useState(false);
   const navigate = useNavigate();
 
   const userId = localStorage.getItem('userId');
@@ -121,8 +137,10 @@ const NGODashboard = () => {
   };
 
   const handleClaim = async (listingId: number) => {
+    // Called from modal after delivery method is selected
     try {
-      const scheduledTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours from now
+      setClaimLoading(true);
+      const scheduledTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
       const token = localStorage.getItem('token');
 
       const response = await fetch('http://localhost:5000/api/ngo/claim', {
@@ -135,20 +153,54 @@ const NGODashboard = () => {
           listingId,
           ngoId: userId,
           scheduledTime,
+          deliveryMethod,
+          ngoLatitude: ngoLocation?.lat || null,
+          ngoLongitude: ngoLocation?.lng || null,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert('Food claimed successfully! You can now coordinate pickup with the donor.');
-        fetchData(); // Refresh data
+        alert(data.message || 'Food claimed successfully!');
+        setClaimModal(null);
+        fetchData();
       } else {
         alert(data.error || 'Failed to claim food');
       }
     } catch (error) {
       console.error('Error claiming food:', error);
       alert('Failed to claim food');
+    } finally {
+      setClaimLoading(false);
+    }
+  };
+
+  const openClaimModal = (listing: Listing) => {
+    setClaimModal(listing);
+    setDeliveryMethod('self-pickup');
+    setEstimatedFee(0);
+    // Try to get NGO location for distance calculation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setNgoLocation(loc);
+          // Calculate estimated distance and fee
+          if (listing.latitude && listing.longitude) {
+            const R = 6371;
+            const dLat = (loc.lat - listing.latitude) * Math.PI / 180;
+            const dLon = (loc.lng - listing.longitude) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(listing.latitude * Math.PI / 180) * Math.cos(loc.lat * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+            const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            setEstimatedFee(Math.round(30 + dist * 8));
+          }
+        },
+        () => { /* location denied, no problem */ },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
     }
   };
 
@@ -301,6 +353,8 @@ const NGODashboard = () => {
             <span className="welcome-text">Welcome, {userName}</span>
           </div>
         </div>
+
+        <VerificationBanner userType="ngo" />
 
         {/* Stats Cards */}
         <div className="stats-grid">
@@ -463,7 +517,7 @@ const NGODashboard = () => {
 
                       <button
                         className="claim-btn"
-                        onClick={() => handleClaim(listing.id)}
+                        onClick={() => openClaimModal(listing)}
                       >
                         <Heart size={18} />
                         Claim Food
@@ -520,6 +574,24 @@ const NGODashboard = () => {
                             <span>{new Date(claim.scheduledTime).toLocaleString()}</span>
                           </div>
                         )}
+                        <div className="detail-row">
+                          {claim.deliveryMethod === 'platform-delivery' ? (
+                            <>
+                              <Truck size={16} />
+                              <span>Platform Delivery — ₹{claim.deliveryFee || 0}</span>
+                              {claim.deliveryStatus && (
+                                <span className={`delivery-badge ${claim.deliveryStatus}`}>
+                                  {claim.deliveryStatus}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <Navigation size={16} />
+                              <span>Self Pickup</span>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       <div className="claim-actions">
@@ -542,6 +614,125 @@ const NGODashboard = () => {
 
         </div>
       </main>
+
+      {/* Claim Modal with Delivery Options */}
+      <AnimatePresence>
+        {claimModal && (
+          <motion.div
+            className="claim-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setClaimModal(null)}
+          >
+            <motion.div
+              className="claim-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="claim-modal-header">
+                <h2>Claim: {claimModal.foodName}</h2>
+                <button className="close-btn" onClick={() => setClaimModal(null)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="claim-modal-info">
+                <div className="info-row">
+                  <Package size={16} />
+                  <span>{claimModal.quantity} {claimModal.unit} — {claimModal.category}</span>
+                </div>
+                <div className="info-row">
+                  <MapPin size={16} />
+                  <span>{claimModal.pickupLocation}</span>
+                </div>
+                <div className="info-row">
+                  <Clock size={16} />
+                  <span>Best before: {new Date(claimModal.bestBefore).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="delivery-options">
+                <h3>How would you like to collect?</h3>
+                
+                <label
+                  className={`delivery-option-card ${deliveryMethod === 'self-pickup' ? 'selected' : ''}`}
+                  onClick={() => setDeliveryMethod('self-pickup')}
+                >
+                  <input
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryMethod === 'self-pickup'}
+                    onChange={() => setDeliveryMethod('self-pickup')}
+                  />
+                  <div className="option-icon self">
+                    <Navigation size={24} />
+                  </div>
+                  <div className="option-content">
+                    <strong>Self Pickup</strong>
+                    <p>Your organization picks up the food directly from the donor</p>
+                    <span className="option-price free">Free</span>
+                  </div>
+                </label>
+
+                <label
+                  className={`delivery-option-card ${deliveryMethod === 'platform-delivery' ? 'selected' : ''}`}
+                  onClick={() => setDeliveryMethod('platform-delivery')}
+                >
+                  <input
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryMethod === 'platform-delivery'}
+                    onChange={() => setDeliveryMethod('platform-delivery')}
+                  />
+                  <div className="option-icon delivery">
+                    <Truck size={24} />
+                  </div>
+                  <div className="option-content">
+                    <strong>Platform Delivery</strong>
+                    <p>We'll deliver the food to your location (fee based on distance)</p>
+                    {estimatedFee > 0 ? (
+                      <span className="option-price paid">
+                        <DollarSign size={14} />
+                        Est. ₹{estimatedFee}
+                      </span>
+                    ) : (
+                      <span className="option-price paid">Fee calculated on confirm</span>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {deliveryMethod === 'platform-delivery' && (
+                <div className="delivery-note">
+                  <Truck size={16} />
+                  <span>Delivery is managed by ReServe admin. You'll receive tracking updates via notifications.</span>
+                </div>
+              )}
+
+              <div className="claim-modal-actions">
+                <button className="btn-cancel" onClick={() => setClaimModal(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn-confirm-claim"
+                  onClick={() => handleClaim(claimModal.id)}
+                  disabled={claimLoading}
+                >
+                  {claimLoading ? 'Claiming...' : (
+                    <>
+                      <Heart size={18} />
+                      {deliveryMethod === 'self-pickup' ? 'Claim & Self-Pickup' : `Claim & Request Delivery`}
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

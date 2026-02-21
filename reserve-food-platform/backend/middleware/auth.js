@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config');
+const { dbGet } = require('../db/database');
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -30,4 +31,22 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authenticateToken, requireRole };
+function requireVerified(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  dbGet('SELECT isVerified FROM users WHERE id = ?', [req.user.userId])
+    .then(user => {
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (!user.isVerified) {
+        return res.status(403).json({ error: 'Account not verified. Please wait for admin approval before performing this action.' });
+      }
+      next();
+    })
+    .catch(err => {
+      console.error('Verification check error:', err);
+      res.status(500).json({ error: 'Verification check failed' });
+    });
+}
+
+module.exports = { authenticateToken, requireRole, requireVerified };

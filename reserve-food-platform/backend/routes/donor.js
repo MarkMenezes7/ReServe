@@ -1,6 +1,6 @@
 const express = require('express');
 const { db, dbRun, dbGet, dbAll } = require('../db/database');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, requireRole, requireVerified } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -71,7 +71,7 @@ router.get('/claims/:userId', async (req, res) => {
 });
 
 // POST /api/donor/listings
-router.post('/listings', async (req, res) => {
+router.post('/listings', requireVerified, async (req, res) => {
   try {
     const {
       foodName, category, foodType, quantity, unit, description, images,
