@@ -53,6 +53,7 @@ export const donorApi = {
   getListings: (userId: number, status?: string) =>
     apiRequest<import('../types').Listing[]>(`/api/donor/listings/${userId}${status ? `?status=${status}` : ''}`),
   getClaims: (userId: number) => apiRequest<import('../types').Claim[]>(`/api/donor/claims/${userId}`),
+  getDeliveryTracking: (userId: number) => apiRequest<import('../types').Claim[]>(`/api/donor/delivery-tracking/${userId}`),
   createListing: (data: Record<string, unknown>) =>
     apiRequest<{ message: string; listingId: number }>('/api/donor/listings', { method: 'POST', body: JSON.stringify(data) }),
   updateListing: (id: number, data: Record<string, unknown>) =>
@@ -64,6 +65,31 @@ export const donorApi = {
   getProfile: (userId: number) => apiRequest<import('../types').User>(`/api/donor/profile/${userId}`),
   updateProfile: (userId: number, data: Record<string, unknown>) =>
     apiRequest<{ message: string }>(`/api/donor/profile/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  submitVerification: (data: { businessName: string; businessType: string; fssaiNumber?: string; gstNumber?: string; description?: string; certificateDetails?: string; document?: File | null }) => {
+    const formData = new FormData();
+    formData.append('businessName', data.businessName);
+    formData.append('businessType', data.businessType);
+    if (data.fssaiNumber) formData.append('fssaiNumber', data.fssaiNumber);
+    if (data.gstNumber) formData.append('gstNumber', data.gstNumber);
+    if (data.description) formData.append('description', data.description);
+    if (data.certificateDetails) formData.append('certificateDetails', data.certificateDetails);
+    if (data.document) formData.append('document', data.document);
+
+    const token = localStorage.getItem('token');
+    return fetch(`${API_BASE}/api/donor/verification`, {
+      method: 'POST',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Request failed');
+      }
+      return res.json() as Promise<{ message: string; requestId: number }>;
+    });
+  },
+  getVerificationStatus: () =>
+    apiRequest<{ request: { id: number; status: string; businessName: string; businessType: string; fssaiNumber: string; gstNumber: string; description: string; certificateDetails: string; adminNotes: string; submittedAt: string; reviewedAt: string } | null; isVerified: boolean }>('/api/donor/verification'),
 };
 
 // NGO API
@@ -71,10 +97,62 @@ export const ngoApi = {
   getStats: (userId: number) => apiRequest<import('../types').NGOStats>(`/api/ngo/stats/${userId}`),
   getListings: () => apiRequest<import('../types').Listing[]>('/api/ngo/listings'),
   getClaims: (userId: number) => apiRequest<import('../types').Claim[]>(`/api/ngo/claims/${userId}`),
-  claimListing: (data: { listingId: number; ngoId: number; scheduledTime?: string }) =>
-    apiRequest<{ message: string; claimId: number }>('/api/ngo/claim', { method: 'POST', body: JSON.stringify(data) }),
+  claimListing: (
+    data:
+      | { listingId: number; ngoId: number; scheduledTime?: string; deliveryMethod?: 'self-pickup' | 'platform-delivery'; ngoLatitude?: number | null; ngoLongitude?: number | null; paymentTransactionId?: string }
+      | FormData
+  ) => {
+    if (data instanceof FormData) {
+      const token = localStorage.getItem('token');
+      return fetch(`${API_BASE}/api/ngo/claim`, {
+        method: 'POST',
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: data,
+      }).then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Request failed');
+        }
+        return res.json() as Promise<{ message: string; claim: import('../types').Claim }>;
+      });
+    }
+
+    return apiRequest<{ message: string; claim: import('../types').Claim }>('/api/ngo/claim', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  getDeliveryTracking: (userId: number) => apiRequest<import('../types').Claim[]>(`/api/ngo/delivery-tracking/${userId}`),
   getHistory: (userId: number) => apiRequest<Record<string, unknown>[]>(`/api/ngo/history/${userId}`),
   getImpact: (userId: number) => apiRequest<Record<string, unknown>>(`/api/ngo/impact/${userId}`),
+  getProfile: (userId: number) => apiRequest<import('../types').User>(`/api/ngo/profile/${userId}`),
+  updateProfile: (userId: number, data: Record<string, unknown>) =>
+    apiRequest<{ message: string }>(`/api/ngo/profile/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  submitVerification: (data: { businessName: string; businessType: string; fssaiNumber?: string; gstNumber?: string; description?: string; certificateDetails?: string; document?: File | null }) => {
+    const formData = new FormData();
+    formData.append('businessName', data.businessName);
+    formData.append('businessType', data.businessType);
+    if (data.fssaiNumber) formData.append('fssaiNumber', data.fssaiNumber);
+    if (data.gstNumber) formData.append('gstNumber', data.gstNumber);
+    if (data.description) formData.append('description', data.description);
+    if (data.certificateDetails) formData.append('certificateDetails', data.certificateDetails);
+    if (data.document) formData.append('document', data.document);
+
+    const token = localStorage.getItem('token');
+    return fetch(`${API_BASE}/api/ngo/verification`, {
+      method: 'POST',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Request failed');
+      }
+      return res.json() as Promise<{ message: string; requestId: number }>;
+    });
+  },
+  getVerificationStatus: () =>
+    apiRequest<{ request: { id: number; status: string; businessName: string; businessType: string; fssaiNumber: string; gstNumber: string; description: string; certificateDetails: string; adminNotes: string; submittedAt: string; reviewedAt: string } | null; isVerified: boolean }>('/api/ngo/verification'),
 };
 
 // Claims API
@@ -117,6 +195,7 @@ export const notificationsApi = {
 // Admin API
 export const adminApi = {
   getStats: () => apiRequest<import('../types').AdminStats>('/api/admin/stats'),
+  getDrivers: () => apiRequest<import('../types').User[]>('/api/admin/drivers'),
   getUsers: (params?: string) => apiRequest<{ users: import('../types').User[]; total: number }>(`/api/admin/users${params ? `?${params}` : ''}`),
   getPendingVerifications: () => apiRequest<import('../types').User[]>('/api/admin/pending-verifications'),
   verifyUser: (id: number) => apiRequest<{ message: string }>(`/api/admin/users/${id}/verify`, { method: 'PATCH' }),
@@ -134,6 +213,30 @@ export const adminApi = {
     apiRequest<{ message: string }>(`/api/admin/contact-messages/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   getReportSummary: () => apiRequest<Record<string, unknown>>('/api/admin/reports/summary'),
   getImpactReport: () => apiRequest<Record<string, unknown>>('/api/admin/reports/impact'),
+  getDeliveryTracking: () => apiRequest<import('../types').Claim[]>('/api/admin/delivery-tracking'),
+  dispatchDriver: (claimId: number, driverId: number) =>
+    apiRequest<{ message: string }>(`/api/admin/deliveries/${claimId}/dispatch`, { method: 'PATCH', body: JSON.stringify({ driverId }) }),
+  reviewDeliveryPayment: (claimId: number, action: 'approve' | 'reject', adminNotes?: string) =>
+    apiRequest<{ message: string; paymentStatus: string; deliveryStatus: string }>(`/api/admin/deliveries/${claimId}/payment-review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, adminNotes }),
+    }),
+  getVerificationRequests: (status?: string) =>
+    apiRequest<Array<{ id: number; userId: number; businessName: string; businessType: string; fssaiNumber: string; gstNumber: string; description: string; certificateDetails: string; status: string; adminNotes: string; submittedAt: string; reviewedAt: string; name: string; email: string; userType: string; organizationName: string; phone: string; city: string }>>(`/api/admin/verification-requests${status ? `?status=${status}` : ''}`),
+  reviewVerification: (id: number, action: 'approve' | 'reject', adminNotes?: string) =>
+    apiRequest<{ message: string }>(`/api/admin/verification-requests/${id}/review`, { method: 'PATCH', body: JSON.stringify({ action, adminNotes }) }),
+};
+
+// Driver API
+export const driverApi = {
+  getMyDeliveries: () => apiRequest<import('../types').Claim[]>('/api/driver/deliveries/me'),
+  updateDeliveryStatus: (claimId: number, deliveryStatus: 'assigned' | 'in-transit' | 'delivered' | 'failed') =>
+    apiRequest<{ message: string }>(`/api/driver/deliveries/${claimId}/status`, { method: 'PATCH', body: JSON.stringify({ deliveryStatus }) }),
+  updateLocation: (claimId: number, lat: number, lng: number, progress?: number) =>
+    apiRequest<{ message: string }>(`/api/driver/deliveries/${claimId}/location`, {
+      method: 'PATCH',
+      body: JSON.stringify({ lat, lng, progress }),
+    }),
 };
 
 // Support API

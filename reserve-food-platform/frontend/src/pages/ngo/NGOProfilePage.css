@@ -1,0 +1,2 @@
+/* NGO Profile Page - Reuses all .profile-* and .verification-* classes from DonorProfilePage */
+@import '../donor/DonorProfilePage.css';

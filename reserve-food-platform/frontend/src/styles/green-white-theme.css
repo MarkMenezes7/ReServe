@@ -22,6 +22,12 @@
 
 /* ===== SIDEBAR ===== */
 .dashboard-sidebar,
+.dl-sidebar,
+.nl-sidebar,
+.admin-sidebar,
+.al-sidebar,
+.driver-sidebar,
+.layout-sidebar,
 .chat-sidebar {
   background: linear-gradient(180deg, #047857, #059669) !important;
   backdrop-filter: none !important;
@@ -29,11 +35,22 @@
 }
 
 .dashboard-sidebar .logo-icon,
+.dl-sidebar .dl-logo-icon,
+.nl-sidebar .nl-logo-icon,
+.admin-sidebar .logo-icon,
+.al-sidebar .al-logo-icon,
+.layout-sidebar .layout-logo-icon,
 .chat-sidebar .logo-icon {
   color: #6ee7b7 !important;
 }
 
 .dashboard-sidebar .logo-text,
+.dl-sidebar .dl-logo-text,
+.nl-sidebar .nl-logo-text,
+.admin-sidebar .logo-text,
+.al-sidebar .al-logo-text,
+.layout-sidebar .layout-sidebar-logo span,
+.driver-sidebar .driver-brand,
 .chat-sidebar .logo-text {
   background: none !important;
   -webkit-background-clip: unset !important;
@@ -41,46 +58,108 @@
   color: white !important;
 }
 
-.dashboard-sidebar .close-sidebar {
+.dashboard-sidebar .close-sidebar,
+.admin-sidebar .close-sidebar {
   color: white !important;
 }
 
-.dashboard-sidebar .user-info {
+.dashboard-sidebar .user-info,
+.dl-sidebar .dl-user-info,
+.nl-sidebar .nl-user-info,
+.admin-sidebar .user-info,
+.al-sidebar .al-user-info,
+.driver-sidebar .driver-user-card {
   background: rgba(255,255,255,0.15) !important;
+  border-color: rgba(255,255,255,0.15) !important;
 }
 
-.dashboard-sidebar .user-details h3 {
+.dashboard-sidebar .user-details h3,
+.dl-sidebar .dl-user-details h3,
+.nl-sidebar .nl-user-details h3,
+.admin-sidebar .user-details h3,
+.al-sidebar .al-user-details h3,
+.driver-sidebar .driver-user-card h3 {
   color: white !important;
 }
 
-.dashboard-sidebar .user-badge {
+.dashboard-sidebar .user-badge,
+.dl-sidebar .dl-user-badge,
+.nl-sidebar .nl-user-badge,
+.admin-sidebar .user-badge,
+.al-sidebar .al-user-badge,
+.driver-sidebar .driver-user-card span {
   background: rgba(255,255,255,0.2) !important;
   color: white !important;
 }
 
-.dashboard-sidebar .nav-item {
+.dashboard-sidebar .nav-item,
+.dl-sidebar .dl-nav-item,
+.nl-sidebar .nl-nav-item,
+.admin-sidebar .nav-item,
+.al-sidebar .al-nav-item,
+.layout-sidebar .layout-nav-item {
   color: rgba(255,255,255,0.75) !important;
 }
 
-.dashboard-sidebar .nav-item:hover {
+.dashboard-sidebar .nav-item:hover,
+.dl-sidebar .dl-nav-item:hover,
+.nl-sidebar .nl-nav-item:hover,
+.admin-sidebar .nav-item:hover,
+.al-sidebar .al-nav-item:hover,
+.layout-sidebar .layout-nav-item:hover {
   background: rgba(255,255,255,0.15) !important;
   color: white !important;
 }
 
-.dashboard-sidebar .nav-item.active {
+.dashboard-sidebar .nav-item.active,
+.dl-sidebar .dl-nav-item.active,
+.nl-sidebar .nl-nav-item.active,
+.admin-sidebar .nav-item.active,
+.al-sidebar .al-nav-item.active,
+.layout-sidebar .layout-nav-item.active {
   background: rgba(255,255,255,0.2) !important;
   color: white !important;
 }
 
-.dashboard-sidebar .logout-btn {
+.dashboard-sidebar .logout-btn,
+.dl-sidebar .dl-logout-btn,
+.nl-sidebar .nl-logout-btn,
+.admin-sidebar .logout-btn,
+.al-sidebar .al-logout-btn,
+.driver-sidebar .driver-logout-btn,
+.layout-sidebar .layout-sidebar-footer .layout-nav-item {
   background: rgba(255,255,255,0.1) !important;
   border-color: rgba(255,255,255,0.15) !important;
   color: rgba(255,255,255,0.8) !important;
 }
 
-.dashboard-sidebar .logout-btn:hover {
+.dashboard-sidebar .logout-btn:hover,
+.dl-sidebar .dl-logout-btn:hover,
+.nl-sidebar .nl-logout-btn:hover,
+.admin-sidebar .logout-btn:hover,
+.al-sidebar .al-logout-btn:hover,
+.driver-sidebar .driver-logout-btn:hover,
+.layout-sidebar .layout-sidebar-footer .layout-nav-item:hover {
   background: rgba(255,255,255,0.2) !important;
   color: white !important;
+}
+
+.driver-sidebar .driver-brand svg,
+.driver-sidebar .driver-avatar {
+  color: white !important;
+}
+
+.driver-sidebar .driver-stats-grid > div {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+}
+
+.driver-sidebar .driver-stats-grid strong {
+  color: white !important;
+}
+
+.driver-sidebar .driver-stats-grid span {
+  color: rgba(255,255,255,0.82) !important;
 }
 
 /* ===== TOP BAR ===== */
@@ -358,8 +437,54 @@
 }
 
 .chat-sidebar {
-  background: white !important;
-  border-right: 1px solid #e5e7eb !important;
+  background: linear-gradient(180deg, #047857, #059669) !important;
+  border-right: none !important;
+}
+
+.chat-sidebar .chat-sidebar-title {
+  color: white !important;
+}
+
+.chat-sidebar .chat-conv-count {
+  background: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+.chat-sidebar .chat-search {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+.chat-sidebar .chat-search::placeholder {
+  color: rgba(255,255,255,0.72) !important;
+}
+
+.chat-sidebar .chat-search-icon {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.chat-sidebar .conversation-item {
+  color: white !important;
+}
+
+.chat-sidebar .conversation-item:hover {
+  background: rgba(255,255,255,0.12) !important;
+}
+
+.chat-sidebar .conversation-item.active {
+  background: rgba(255,255,255,0.24) !important;
+  border-color: rgba(255,255,255,0.35) !important;
+}
+
+.chat-sidebar .conv-name,
+.chat-sidebar .conv-food {
+  color: white !important;
+}
+
+.chat-sidebar .conv-time,
+.chat-sidebar .conv-last-msg {
+  color: rgba(255,255,255,0.78) !important;
 }
 
 .conversation-card {

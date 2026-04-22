@@ -1,8 +1,33 @@
 const express = require('express');
+const path = require('path');
+const multer = require('multer');
 const { db, dbRun, dbGet, dbAll } = require('../db/database');
 const { authenticateToken, requireRole, requireVerified } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Multer config for verification documents
+const verificationStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads', 'verification'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `verif-${req.user.userId}-${Date.now()}${ext}`);
+  },
+});
+const verificationUpload = multer({
+  storage: verificationStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|pdf|webp)$/i;
+    if (allowed.test(path.extname(file.originalname))) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPG, PNG, WEBP, and PDF files are allowed'));
+    }
+  },
+});
 
 // All donor routes require authentication
 router.use(authenticateToken);
@@ -67,6 +92,64 @@ router.get('/claims/:userId', async (req, res) => {
   } catch (error) {
     console.error('Donor claims error:', error);
     res.status(500).json({ error: 'Failed to fetch claims' });
+  }
+});
+
+// GET /api/donor/delivery-tracking/:userId
+router.get('/delivery-tracking/:userId', async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (req.user.userId !== userId) {
+      return res.status(403).json({ error: 'Cannot access another user\'s delivery tracking' });
+    }
+
+    const deliveries = await dbAll(
+      `SELECT
+         c.id,
+         c.listingId,
+         c.ngoId,
+         c.status as claimStatus,
+         c.deliveryStatus,
+         c.deliveryMethod,
+         c.deliveryFee,
+         c.deliveryDistance,
+         c.paymentStatus,
+         c.driverId,
+         c.driverCurrentLat,
+         c.driverCurrentLng,
+         c.driverRouteProgress,
+         c.driverRouteStage,
+         c.dispatchedAt,
+         c.deliveredAt,
+         c.createdAt,
+         l.foodName,
+         l.quantity,
+         l.unit,
+         l.pickupLocation,
+         l.latitude as pickupLat,
+         l.longitude as pickupLng,
+         ngo.name as ngoName,
+         ngo.organizationName as ngoOrg,
+         driver.name as driverName,
+         driver.phone as driverPhone,
+         COALESCE(c.ngoLatitude, ngo.latitude) as dropLat,
+         COALESCE(c.ngoLongitude, ngo.longitude) as dropLng,
+         COALESCE(ngo.address, ngo.city, 'NGO Location') as dropLocation
+       FROM claims c
+       JOIN listings l ON c.listingId = l.id
+       JOIN users ngo ON c.ngoId = ngo.id
+       LEFT JOIN users driver ON c.driverId = driver.id
+       WHERE l.donorId = ?
+         AND c.deliveryMethod = 'platform-delivery'
+         AND COALESCE(c.paymentStatus, 'verified') IN ('verified', 'not-required')
+       ORDER BY c.createdAt DESC`,
+      [userId]
+    );
+
+    res.json(deliveries);
+  } catch (error) {
+    console.error('Donor delivery tracking error:', error);
+    res.status(500).json({ error: 'Failed to fetch delivery tracking' });
   }
 });
 
@@ -171,18 +254,33 @@ router.delete('/listings/:id', async (req, res) => {
   }
 });
 
+// Unit-to-kg conversion factor via SQL CASE (used in analytics queries)
+const QTY_TO_KG = `
+  CASE unit
+    WHEN 'kg' THEN quantity
+    WHEN 'liters' THEN quantity * 1.0
+    WHEN 'servings' THEN quantity * 0.3
+    WHEN 'pieces' THEN quantity * 0.1
+    WHEN 'packets' THEN quantity * 0.25
+    WHEN 'boxes' THEN quantity * 2.0
+    ELSE quantity * 0.2
+  END
+`;
+
 // GET /api/donor/analytics/:userId
 router.get('/analytics/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
 
     const monthly = await dbAll(`
-      SELECT strftime('%Y-%m', createdAt) as month, COUNT(*) as count, SUM(quantity) as quantity
+      SELECT strftime('%Y-%m', createdAt) as month, COUNT(*) as count,
+        ROUND(SUM(${QTY_TO_KG}), 2) as quantity
       FROM listings WHERE donorId = ? GROUP BY month ORDER BY month DESC LIMIT 12
     `, [userId]);
 
     const categories = await dbAll(`
-      SELECT category, COUNT(*) as count, SUM(quantity) as quantity
+      SELECT category, COUNT(*) as count,
+        ROUND(SUM(${QTY_TO_KG}), 2) as quantity
       FROM listings WHERE donorId = ? GROUP BY category ORDER BY count DESC
     `, [userId]);
 
@@ -192,7 +290,8 @@ router.get('/analytics/:userId', async (req, res) => {
     `, [userId]);
 
     const totals = await dbGet(`
-      SELECT COUNT(*) as totalDonations, COALESCE(SUM(quantity), 0) as totalQuantity
+      SELECT COUNT(*) as totalDonations,
+        ROUND(COALESCE(SUM(${QTY_TO_KG}), 0), 2) as totalQuantity
       FROM listings WHERE donorId = ?
     `, [userId]);
 
@@ -215,7 +314,7 @@ router.get('/analytics/:userId', async (req, res) => {
       hourly,
       totalDonations,
       totalQuantity,
-      avgPerDonation: totalDonations > 0 ? totalQuantity / totalDonations : 0,
+      avgPerDonation: totalDonations > 0 ? +(totalQuantity / totalDonations).toFixed(2) : 0,
       collectionRate: totalClaims.count > 0 ? (collected.count / totalClaims.count) * 100 : 0,
     });
   } catch (error) {
@@ -281,6 +380,56 @@ router.put('/profile/:userId', async (req, res) => {
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// POST /api/donor/verification — submit a verification request
+router.post('/verification', verificationUpload.single('document'), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Check if there's already a pending request
+    const existing = await dbGet(
+      "SELECT id, status FROM verification_requests WHERE userId = ? AND status = 'pending'",
+      [userId]
+    );
+    if (existing) {
+      return res.status(400).json({ error: 'You already have a pending verification request' });
+    }
+
+    const { businessName, businessType, fssaiNumber, gstNumber, description, certificateDetails } = req.body;
+    if (!businessName || !businessType) {
+      return res.status(400).json({ error: 'Business name and type are required' });
+    }
+
+    const documentUrl = req.file ? `/uploads/verification/${req.file.filename}` : null;
+
+    const result = await dbRun(
+      `INSERT INTO verification_requests (userId, businessName, businessType, fssaiNumber, gstNumber, description, certificateDetails, documentUrl)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, businessName, businessType, fssaiNumber || null, gstNumber || null, description || null, certificateDetails || null, documentUrl]
+    );
+
+    res.status(201).json({ message: 'Verification request submitted', requestId: result.lastID });
+  } catch (error) {
+    console.error('Submit verification error:', error);
+    res.status(500).json({ error: 'Failed to submit verification request' });
+  }
+});
+
+// GET /api/donor/verification — get current user's verification status
+router.get('/verification', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const request = await dbGet(
+      `SELECT * FROM verification_requests WHERE userId = ? ORDER BY submittedAt DESC LIMIT 1`,
+      [userId]
+    );
+    const user = await dbGet('SELECT isVerified FROM users WHERE id = ?', [userId]);
+    res.json({ request: request || null, isVerified: !!user?.isVerified });
+  } catch (error) {
+    console.error('Get verification status error:', error);
+    res.status(500).json({ error: 'Failed to fetch verification status' });
   }
 });
 

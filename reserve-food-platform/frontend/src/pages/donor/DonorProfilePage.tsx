@@ -13,8 +13,15 @@ import {
   RefreshCw,
   Star,
   MessageCircle,
+  ShieldCheck,
+  ShieldAlert,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Send,
+  Upload,
 } from 'lucide-react';
-import Layout from '../../components/Layout';
+import DonorLayout from '../../components/DonorLayout';
 import { useToast } from '../../components/ToastProvider';
 import { donorApi, reviewsApi } from '../../services/api';
 import type { User as UserType, Review, ReviewStats } from '../../types';
@@ -57,9 +64,27 @@ export default function DonorProfilePage() {
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
+  // Verification state
+  const [verificationStatus, setVerificationStatus] = useState<{
+    request: { id: number; status: string; businessName: string; businessType: string; fssaiNumber: string; gstNumber: string; description: string; certificateDetails: string; adminNotes: string; submittedAt: string; reviewedAt: string } | null;
+    isVerified: boolean;
+  } | null>(null);
+  const [showVerificationForm, setShowVerificationForm] = useState(false);
+  const [verificationSubmitting, setVerificationSubmitting] = useState(false);
+  const [verificationForm, setVerificationForm] = useState({
+    businessName: '',
+    businessType: 'restaurant',
+    fssaiNumber: '',
+    gstNumber: '',
+    description: '',
+    certificateDetails: '',
+  });
+  const [verificationDocument, setVerificationDocument] = useState<File | null>(null);
+
   useEffect(() => {
     fetchProfile();
     fetchReviews();
+    fetchVerificationStatus();
   }, []);
 
   async function fetchProfile() {
@@ -99,6 +124,41 @@ export default function DonorProfilePage() {
     } finally {
       setReviewsLoading(false);
     }
+  }
+
+  async function fetchVerificationStatus() {
+    try {
+      const data = await donorApi.getVerificationStatus();
+      setVerificationStatus(data);
+    } catch {
+      // Non-critical
+    }
+  }
+
+  async function handleSubmitVerification(e: FormEvent) {
+    e.preventDefault();
+    if (!verificationForm.businessName.trim() || !verificationForm.businessType) {
+      showToast('Business name and type are required', 'warning');
+      return;
+    }
+    try {
+      setVerificationSubmitting(true);
+      await donorApi.submitVerification({ ...verificationForm, document: verificationDocument });
+      showToast('Verification request submitted successfully!', 'success');
+      setShowVerificationForm(false);
+      setVerificationDocument(null);
+      fetchVerificationStatus();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit verification';
+      showToast(message, 'error');
+    } finally {
+      setVerificationSubmitting(false);
+    }
+  }
+
+  function handleVerificationInputChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { name, value } = e.target;
+    setVerificationForm(prev => ({ ...prev, [name]: value }));
   }
 
   function handleInputChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -160,29 +220,29 @@ export default function DonorProfilePage() {
 
   if (loading) {
     return (
-      <Layout>
+      <DonorLayout>
         <div className="profile-loading">
           <RefreshCw className="profile-spinner" size={32} />
           <p>Loading profile...</p>
         </div>
-      </Layout>
+      </DonorLayout>
     );
   }
 
   if (!profile) {
     return (
-      <Layout>
+      <DonorLayout>
         <div className="profile-empty">
           <User size={64} />
           <h3>Profile not found</h3>
           <p>Unable to load your profile data.</p>
         </div>
-      </Layout>
+      </DonorLayout>
     );
   }
 
   return (
-    <Layout>
+    <DonorLayout>
       <div className="donor-profile">
         <div className="profile-grid">
           {/* Left Column: Profile Info */}
@@ -434,10 +494,276 @@ export default function DonorProfilePage() {
                 </form>
               </motion.div>
             )}
+
           </div>
 
-          {/* Right Column: Reviews */}
+          {/* Right Column: Verification + Reviews */}
           <div className="profile-right">
+            {/* Verification Section */}
+            {!(verificationStatus?.isVerified || !!profile.isVerified) && (
+              <motion.div
+                className="profile-card verification-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                <h3 className="profile-card-title">
+                  <ShieldAlert size={18} className="profile-title-icon" />
+                  Account Verification
+                </h3>
+
+                {/* No request submitted yet */}
+                {!verificationStatus?.request && !showVerificationForm && (
+                  <div className="verification-prompt">
+                    <div className="verification-prompt-icon">
+                      <ShieldAlert size={40} />
+                    </div>
+                    <p>Your account is not yet verified. Submit your business details to get verified and start creating food listings.</p>
+                    <button
+                      className="profile-edit-btn"
+                      onClick={() => setShowVerificationForm(true)}
+                    >
+                      <Send size={16} />
+                      Submit Verification
+                    </button>
+                  </div>
+                )}
+
+                {/* Pending request */}
+                {verificationStatus?.request?.status === 'pending' && (
+                  <div className="verification-status-box pending">
+                    <Clock size={24} />
+                    <div>
+                      <h4>Verification Under Review</h4>
+                      <p>Your verification request was submitted on {new Date(verificationStatus.request.submittedAt).toLocaleDateString()}. Our admin team is reviewing your details.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rejected request */}
+                {verificationStatus?.request?.status === 'rejected' && (
+                  <div className="verification-status-box rejected">
+                    <AlertTriangle size={24} />
+                    <div>
+                      <h4>Verification Not Approved</h4>
+                      <p>{verificationStatus.request.adminNotes || 'Your request was not approved. Please update your details and try again.'}</p>
+                      {!showVerificationForm && (
+                        <button
+                          className="profile-edit-btn"
+                          style={{ marginTop: '0.75rem' }}
+                          onClick={() => {
+                            setVerificationForm({
+                              businessName: verificationStatus.request?.businessName || '',
+                              businessType: verificationStatus.request?.businessType || 'restaurant',
+                              fssaiNumber: verificationStatus.request?.fssaiNumber || '',
+                              gstNumber: verificationStatus.request?.gstNumber || '',
+                              description: verificationStatus.request?.description || '',
+                              certificateDetails: verificationStatus.request?.certificateDetails || '',
+                            });
+                            setShowVerificationForm(true);
+                          }}
+                        >
+                          <Send size={16} />
+                          Resubmit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Verification Form */}
+                {showVerificationForm && (
+                  <form onSubmit={handleSubmitVerification} className="verification-form">
+                    <div className="profile-form-group">
+                      <label className="profile-form-label">
+                        <Building2 size={14} />
+                        Business / Restaurant Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="businessName"
+                        value={verificationForm.businessName}
+                        onChange={handleVerificationInputChange}
+                        className="profile-form-input"
+                        placeholder="e.g., Taste of India Restaurant"
+                        required
+                      />
+                    </div>
+
+                    <div className="profile-form-group">
+                      <label className="profile-form-label">
+                        <FileText size={14} />
+                        Business Type *
+                      </label>
+                      <select
+                        name="businessType"
+                        value={verificationForm.businessType}
+                        onChange={handleVerificationInputChange}
+                        className="profile-form-input"
+                        required
+                      >
+                        <option value="restaurant">Restaurant</option>
+                        <option value="hotel">Hotel</option>
+                        <option value="catering">Catering Service</option>
+                        <option value="bakery">Bakery</option>
+                        <option value="grocery">Grocery Store</option>
+                        <option value="farm">Farm / Agriculture</option>
+                        <option value="corporate">Corporate Cafeteria</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="verification-form-row">
+                      <div className="profile-form-group">
+                        <label className="profile-form-label">FSSAI License Number</label>
+                        <input
+                          type="text"
+                          name="fssaiNumber"
+                          value={verificationForm.fssaiNumber}
+                          onChange={handleVerificationInputChange}
+                          className="profile-form-input"
+                          placeholder="14-digit FSSAI number"
+                          maxLength={14}
+                        />
+                      </div>
+                      <div className="profile-form-group">
+                        <label className="profile-form-label">GST Number</label>
+                        <input
+                          type="text"
+                          name="gstNumber"
+                          value={verificationForm.gstNumber}
+                          onChange={handleVerificationInputChange}
+                          className="profile-form-input"
+                          placeholder="GST registration number"
+                          maxLength={15}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-group">
+                      <label className="profile-form-label">
+                        <FileText size={14} />
+                        Business Description
+                      </label>
+                      <textarea
+                        name="description"
+                        value={verificationForm.description}
+                        onChange={handleVerificationInputChange}
+                        className="profile-form-textarea"
+                        rows={3}
+                        placeholder="Briefly describe your business and the kind of food you typically donate..."
+                      />
+                    </div>
+
+                    <div className="profile-form-group">
+                      <label className="profile-form-label">
+                        <ShieldCheck size={14} />
+                        Certificate / Compliance Details
+                      </label>
+                      <textarea
+                        name="certificateDetails"
+                        value={verificationForm.certificateDetails}
+                        onChange={handleVerificationInputChange}
+                        className="profile-form-textarea"
+                        rows={3}
+                        placeholder="List any food safety certifications, hygiene compliance, or relevant permits..."
+                      />
+                    </div>
+
+                    <div className="profile-form-group">
+                      <label className="profile-form-label">
+                        <Upload size={14} />
+                        Upload Document (Certificate / License / Proof)
+                      </label>
+                      <div
+                        className="verification-upload-area"
+                        onClick={() => document.getElementById('verification-doc-input')?.click()}
+                      >
+                        <input
+                          id="verification-doc-input"
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.webp,.pdf"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            if (file && file.size > 5 * 1024 * 1024) {
+                              showToast('File size must be under 5 MB', 'warning');
+                              return;
+                            }
+                            setVerificationDocument(file);
+                          }}
+                        />
+                        {verificationDocument ? (
+                          <div className="verification-upload-selected">
+                            <FileText size={20} />
+                            <span>{verificationDocument.name}</span>
+                            <button
+                              type="button"
+                              className="verification-upload-remove"
+                              onClick={(e) => { e.stopPropagation(); setVerificationDocument(null); }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="verification-upload-placeholder">
+                            <Upload size={24} />
+                            <p>Click to upload JPG, PNG, or PDF (max 5 MB)</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="verification-form-actions">
+                      <button
+                        type="button"
+                        className="profile-cancel-btn"
+                        onClick={() => setShowVerificationForm(false)}
+                      >
+                        <X size={16} />
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="profile-save-btn"
+                        disabled={verificationSubmitting}
+                      >
+                        {verificationSubmitting ? (
+                          <>
+                            <RefreshCw size={16} className="profile-btn-spinner" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <Send size={16} />
+                            Submit for Verification
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </motion.div>
+            )}
+
+            {/* Show verified badge if verified */}
+            {(verificationStatus?.isVerified || !!profile.isVerified) && (
+              <motion.div
+                className="profile-card verification-card verified"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                <div className="verification-status-box approved">
+                  <CheckCircle size={24} />
+                  <div>
+                    <h4>Verified Account</h4>
+                    <p>Your account is verified. You can create and manage food listings.</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Review Stats */}
             <motion.div
               className="profile-card"
@@ -551,6 +877,6 @@ export default function DonorProfilePage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </DonorLayout>
   );
 }

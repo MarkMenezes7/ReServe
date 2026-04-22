@@ -16,9 +16,11 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email, password, and user type are required' });
     }
 
-    if (!['donor', 'ngo'].includes(userType)) {
-      return res.status(400).json({ error: 'User type must be donor or ngo' });
+    if (!['donor', 'ngo', 'driver'].includes(userType)) {
+      return res.status(400).json({ error: 'User type must be donor, ngo, or driver' });
     }
+
+    const shouldAutoVerify = userType === 'driver' ? 1 : 0;
 
     const existingUser = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
     if (existingUser) {
@@ -27,9 +29,21 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await dbRun(
-      `INSERT INTO users (name, email, password, userType, organizationName, phone, address, city, state, pincode)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, hashedPassword, userType, organizationName || null, phone || null, address || null, city || null, state || null, pincode || null]
+      `INSERT INTO users (name, email, password, userType, organizationName, phone, address, city, state, pincode, isVerified)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name,
+        email,
+        hashedPassword,
+        userType,
+        organizationName || null,
+        phone || null,
+        address || null,
+        city || null,
+        state || null,
+        pincode || null,
+        shouldAutoVerify,
+      ]
     );
 
     const token = jwt.sign(

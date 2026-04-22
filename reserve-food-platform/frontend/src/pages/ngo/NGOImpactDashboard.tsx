@@ -4,7 +4,7 @@ import {
   Award, Leaf, Droplets, Users, TrendingUp, TreePine, Car,
   UtensilsCrossed, Sparkles, Target, Trophy, Heart,
 } from 'lucide-react';
-import Layout from '../../components/Layout';
+import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { ngoApi, supportApi, mlApi } from '../../services/api';
 import type { ImpactStats, AIInsight } from '../../types';
@@ -109,17 +109,17 @@ export default function NGOImpactDashboard() {
 
   if (loading) {
     return (
-      <Layout>
+      <NGOLayout>
         <div className="ip-loading">
           <div className="ip-loading-icon"><Award size={40} /></div>
           <p>Calculating your impact...</p>
         </div>
-      </Layout>
+      </NGOLayout>
     );
   }
 
   return (
-    <Layout>
+    <NGOLayout>
       <div className="ip-page">
         <div className="ip-header">
           <div className="ip-header-icon"><Award size={28} /></div>
@@ -259,6 +259,6 @@ export default function NGOImpactDashboard() {
           </div>
         </motion.div>
       </div>
-    </Layout>
+    </NGOLayout>
   );
 }

@@ -21,6 +21,7 @@ import {
   BarChart3,
   User,
   MapPin,
+  Truck,
   Thermometer,
   Info,
 } from 'lucide-react';
@@ -229,6 +230,13 @@ const DonorDashboard = () => {
           >
             <Calendar className="nav-icon" />
             <span>Claims</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/donor/delivery-map')}
+          >
+            <Truck className="nav-icon" />
+            <span>Delivery Map</span>
           </button>
           <button
             className="nav-item"

@@ -97,9 +97,31 @@ function initializeDatabase() {
       quantity REAL,
       cancelReason TEXT,
       proofImage TEXT,
+      deliveryMethod TEXT DEFAULT 'self-pickup',
+      deliveryFee REAL DEFAULT 0,
+      deliveryStatus TEXT DEFAULT NULL,
+      deliveryDistance REAL DEFAULT 0,
+      paymentUpiId TEXT,
+      paymentTransactionId TEXT,
+      paymentScreenshotUrl TEXT,
+      paymentStatus TEXT DEFAULT 'not-required',
+      paymentVerifiedBy INTEGER,
+      paymentVerifiedAt DATETIME,
+      paymentRejectReason TEXT,
+      ngoLatitude REAL,
+      ngoLongitude REAL,
+      driverId INTEGER,
+      driverCurrentLat REAL,
+      driverCurrentLng REAL,
+      driverRouteProgress REAL DEFAULT 0,
+      driverRouteStage TEXT,
+      dispatchedAt DATETIME,
+      deliveredAt DATETIME,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (listingId) REFERENCES listings(id),
-      FOREIGN KEY (ngoId) REFERENCES users(id)
+      FOREIGN KEY (ngoId) REFERENCES users(id),
+      FOREIGN KEY (driverId) REFERENCES users(id),
+      FOREIGN KEY (paymentVerifiedBy) REFERENCES users(id)
     )`);
 
     // Reviews
@@ -176,6 +198,36 @@ function initializeDatabase() {
       FOREIGN KEY (userId) REFERENCES users(id)
     )`);
 
+    // Verification requests
+    db.run(`CREATE TABLE IF NOT EXISTS verification_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      businessName TEXT,
+      businessType TEXT,
+      fssaiNumber TEXT,
+      gstNumber TEXT,
+      description TEXT,
+      certificateDetails TEXT,
+      documentUrl TEXT,
+      status TEXT DEFAULT 'pending',
+      adminNotes TEXT,
+      reviewedBy INTEGER,
+      submittedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      reviewedAt DATETIME,
+      FOREIGN KEY (userId) REFERENCES users(id),
+      FOREIGN KEY (reviewedBy) REFERENCES users(id)
+    )`);
+
+    // Add documentUrl column to verification_requests if missing (migration-safe)
+    db.all("PRAGMA table_info(verification_requests)", (err, cols) => {
+      if (!err && cols) {
+        const colNames = cols.map(c => c.name);
+        if (!colNames.includes('documentUrl')) {
+          db.run("ALTER TABLE verification_requests ADD COLUMN documentUrl TEXT", () => {});
+        }
+      }
+    });
+
     // Add columns to existing messages table if they don't exist (migration-safe)
     db.all("PRAGMA table_info(messages)", (err, cols) => {
       if (!err && cols) {
@@ -249,11 +301,53 @@ function initializeDatabase() {
         if (!colNames.includes('deliveryDistance')) {
           db.run("ALTER TABLE claims ADD COLUMN deliveryDistance REAL DEFAULT 0", () => {});
         }
+        if (!colNames.includes('paymentUpiId')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentUpiId TEXT", () => {});
+        }
+        if (!colNames.includes('paymentTransactionId')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentTransactionId TEXT", () => {});
+        }
+        if (!colNames.includes('paymentScreenshotUrl')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentScreenshotUrl TEXT", () => {});
+        }
+        if (!colNames.includes('paymentStatus')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentStatus TEXT DEFAULT 'not-required'", () => {});
+        }
+        if (!colNames.includes('paymentVerifiedBy')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentVerifiedBy INTEGER", () => {});
+        }
+        if (!colNames.includes('paymentVerifiedAt')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentVerifiedAt DATETIME", () => {});
+        }
+        if (!colNames.includes('paymentRejectReason')) {
+          db.run("ALTER TABLE claims ADD COLUMN paymentRejectReason TEXT", () => {});
+        }
         if (!colNames.includes('ngoLatitude')) {
           db.run("ALTER TABLE claims ADD COLUMN ngoLatitude REAL", () => {});
         }
         if (!colNames.includes('ngoLongitude')) {
           db.run("ALTER TABLE claims ADD COLUMN ngoLongitude REAL", () => {});
+        }
+        if (!colNames.includes('driverId')) {
+          db.run("ALTER TABLE claims ADD COLUMN driverId INTEGER", () => {});
+        }
+        if (!colNames.includes('driverCurrentLat')) {
+          db.run("ALTER TABLE claims ADD COLUMN driverCurrentLat REAL", () => {});
+        }
+        if (!colNames.includes('driverCurrentLng')) {
+          db.run("ALTER TABLE claims ADD COLUMN driverCurrentLng REAL", () => {});
+        }
+        if (!colNames.includes('driverRouteProgress')) {
+          db.run("ALTER TABLE claims ADD COLUMN driverRouteProgress REAL DEFAULT 0", () => {});
+        }
+        if (!colNames.includes('driverRouteStage')) {
+          db.run("ALTER TABLE claims ADD COLUMN driverRouteStage TEXT", () => {});
+        }
+        if (!colNames.includes('dispatchedAt')) {
+          db.run("ALTER TABLE claims ADD COLUMN dispatchedAt DATETIME", () => {});
+        }
+        if (!colNames.includes('deliveredAt')) {
+          db.run("ALTER TABLE claims ADD COLUMN deliveredAt DATETIME", () => {});
         }
       }
     });

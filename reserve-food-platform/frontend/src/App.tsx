@@ -7,6 +7,7 @@ import NGOMapPage from './pages/ngo/NGOMapPage';
 import NGOForecastPage from './pages/ngo/NGOForecastPage';
 import NGOCollectionHistory from './pages/ngo/NGOCollectionHistory';
 import NGOImpactDashboard from './pages/ngo/NGOImpactDashboard';
+import NGOProfilePage from './pages/ngo/NGOProfilePage';
 import DonorDashboard from './pages/donor/DonorDashboard';
 import AddListingPage from './pages/donor/AddListingPage';
 import EditListingPage from './pages/donor/EditListingPage';
@@ -20,6 +21,8 @@ import SupportUsPage from './pages/support/SupportUsPage';
 import NotFound from './pages/common/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import SimplePage from './pages/common/SimplePage';
+import DeliveryTrackingMapPage from './pages/shared/DeliveryTrackingMapPage';
+import DriverDashboard from './pages/driver/DriverDashboard';
 
 function App() {
   return (
@@ -40,6 +43,8 @@ function App() {
         <Route path="/ngo/forecast" element={<ProtectedRoute allowed={['ngo']}><NGOForecastPage /></ProtectedRoute>} />
         <Route path="/ngo/history" element={<ProtectedRoute allowed={['ngo']}><NGOCollectionHistory /></ProtectedRoute>} />
         <Route path="/ngo/impact" element={<ProtectedRoute allowed={['ngo']}><NGOImpactDashboard /></ProtectedRoute>} />
+        <Route path="/ngo/profile" element={<ProtectedRoute allowed={['ngo']}><NGOProfilePage /></ProtectedRoute>} />
+        <Route path="/ngo/delivery-map" element={<ProtectedRoute allowed={['ngo']}><DeliveryTrackingMapPage /></ProtectedRoute>} />
 
         {/* Donor routes */}
         <Route path="/donor/dashboard" element={<ProtectedRoute allowed={['donor']}><DonorDashboard /></ProtectedRoute>} />
@@ -48,9 +53,14 @@ function App() {
         <Route path="/donor/analytics" element={<ProtectedRoute allowed={['donor']}><DonorAnalyticsPage /></ProtectedRoute>} />
         <Route path="/donor/history" element={<ProtectedRoute allowed={['donor']}><DonorHistoryPage /></ProtectedRoute>} />
         <Route path="/donor/profile" element={<ProtectedRoute allowed={['donor']}><DonorProfilePage /></ProtectedRoute>} />
+        <Route path="/donor/delivery-map" element={<ProtectedRoute allowed={['donor']}><DeliveryTrackingMapPage /></ProtectedRoute>} />
 
         {/* Admin routes */}
         <Route path="/admin/dashboard" element={<ProtectedRoute allowed={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/delivery-map" element={<ProtectedRoute allowed={['admin']}><DeliveryTrackingMapPage /></ProtectedRoute>} />
+
+        {/* Driver routes */}
+        <Route path="/driver/dashboard" element={<ProtectedRoute allowed={['driver']}><DriverDashboard /></ProtectedRoute>} />
 
         {/* Shared routes */}
         <Route path="/chat" element={<ProtectedRoute allowed={['donor', 'ngo']}><ChatPage /></ProtectedRoute>} />

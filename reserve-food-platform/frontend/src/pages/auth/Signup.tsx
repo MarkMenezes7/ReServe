@@ -1,10 +1,13 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { Leaf, Mail, Lock, Eye, EyeOff, User, Building2, Heart, ArrowRight, Phone, MapPin } from 'lucide-react';
+import {
+  Leaf, Mail, Lock, Eye, EyeOff, User, Building2, Heart,
+  ArrowRight, Phone, MapPin, Utensils, ShieldCheck, Truck,
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Signup.css';
 
-type UserType = 'donor' | 'ngo';
+type UserType = 'donor' | 'ngo' | 'driver';
 
 interface FormData {
   name: string;
@@ -38,20 +41,22 @@ const Signup = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [focused, setFocused] = useState<string | null>(null);
+  const [agreedTerms, setAgreedTerms] = useState(false);
   const navigate = useNavigate();
 
-  const getPasswordStrength = (password: string): { level: number; label: string; className: string } => {
-    if (!password) return { level: 0, label: '', className: '' };
+  const getPasswordStrength = (password: string): { level: number; label: string; cls: string } => {
+    if (!password) return { level: 0, label: '', cls: '' };
     let score = 0;
     if (password.length >= 6) score++;
     if (password.length >= 8) score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
-    if (score <= 1) return { level: 1, label: 'Weak', className: 'weak' };
-    if (score <= 2) return { level: 2, label: 'Fair', className: 'fair' };
-    if (score <= 3) return { level: 3, label: 'Good', className: 'good' };
-    return { level: 4, label: 'Strong', className: 'strong' };
+    if (score <= 1) return { level: 1, label: 'Weak', cls: 'weak' };
+    if (score <= 2) return { level: 2, label: 'Fair', cls: 'fair' };
+    if (score <= 3) return { level: 3, label: 'Good', cls: 'good' };
+    return { level: 4, label: 'Strong', cls: 'strong' };
   };
 
   const validateForm = (): boolean => {
@@ -62,7 +67,7 @@ const Signup = () => {
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Please enter a valid email';
 
-    if (!formData.organizationName.trim()) {
+    if (userType !== 'driver' && !formData.organizationName.trim()) {
       newErrors.organizationName = userType === 'donor' ? 'Restaurant/business name is required' : 'NGO name is required';
     }
 
@@ -111,6 +116,7 @@ const Signup = () => {
       setTimeout(() => {
         if (data.user.userType === 'donor') navigate('/donor/dashboard');
         else if (data.user.userType === 'ngo') navigate('/ngo/dashboard');
+        else if (data.user.userType === 'driver') navigate('/driver/dashboard');
       }, 300);
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
@@ -128,200 +134,306 @@ const Signup = () => {
 
   const strength = getPasswordStrength(formData.password);
 
-  return (
-    <div className="auth-container">
-      <div className="auth-background">
-        <motion.div className="auth-orb auth-orb-1"
-          animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div className="auth-orb auth-orb-2"
-          animate={{ scale: [1, 1.3, 1], x: [0, -30, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+  const features = [
+    { icon: <Utensils />, text: 'List surplus food in seconds' },
+    { icon: <Heart />, text: 'Matched with nearby NGOs instantly' },
+    { icon: <ShieldCheck />, text: 'Verified, safe, and transparent' },
+  ];
+
+  /* reusable field builder */
+  const renderField = (
+    name: keyof FormData,
+    label: string,
+    icon: React.ReactNode,
+    placeholder: string,
+    type = 'text',
+    required = false,
+  ) => (
+    <div className="signup-field" key={name}>
+      <label className="signup-label">{label}{required && ' *'}</label>
+      <div className={`signup-input-box ${focused === name ? 'focused' : ''} ${errors[name as keyof FormErrors] ? 'has-error' : ''}`}>
+        <span className="signup-input-icon">{icon}</span>
+        <input
+          type={type}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          onFocus={() => setFocused(name)}
+          onBlur={() => setFocused(null)}
+          placeholder={placeholder}
+          className="signup-input"
+          disabled={loading}
         />
       </div>
+      {errors[name as keyof FormErrors] && (
+        <motion.span className="signup-field-error" initial={{ y: -5, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          {errors[name as keyof FormErrors]}
+        </motion.span>
+      )}
+    </div>
+  );
 
-      <motion.div className="auth-logo"
-        initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+  const renderPasswordField = (
+    name: 'password' | 'confirmPassword',
+    label: string,
+    placeholder: string,
+    show: boolean,
+    toggle: () => void,
+  ) => (
+    <div className="signup-field" key={name}>
+      <label className="signup-label">{label} *</label>
+      <div className={`signup-input-box ${focused === name ? 'focused' : ''} ${errors[name] ? 'has-error' : ''}`}>
+        <span className="signup-input-icon"><Lock /></span>
+        <input
+          type={show ? 'text' : 'password'}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          onFocus={() => setFocused(name)}
+          onBlur={() => setFocused(null)}
+          placeholder={placeholder}
+          className="signup-input"
+          disabled={loading}
+        />
+        <button type="button" onClick={toggle} className="signup-eye-btn" disabled={loading} tabIndex={-1}>
+          {show ? <EyeOff /> : <Eye />}
+        </button>
+      </div>
+      {errors[name] && (
+        <motion.span className="signup-field-error" initial={{ y: -5, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          {errors[name]}
+        </motion.span>
+      )}
+      {name === 'password' && formData.password && (
+        <div className="signup-strength">
+          <div className="signup-strength-bars">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className={`signup-strength-seg ${i <= strength.level ? `active ${strength.cls}` : ''}`} />
+            ))}
+          </div>
+          <span className={`signup-strength-label ${strength.cls}`}>{strength.label}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="signup-page">
+      {/* Left panel */}
+      <motion.div
+        className="signup-brand-panel"
+        initial={{ x: -60, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        <Link to="/" className="auth-logo-link">
-          <Leaf className="auth-logo-icon" />
-          <span className="auth-logo-text">
-            <span className="auth-logo-re">Re</span>
-            <span className="auth-logo-serve">Serve</span>
-          </span>
-        </Link>
+        <div className="signup-brand-bg">
+          <div className="signup-blob signup-blob-1" />
+          <div className="signup-blob signup-blob-2" />
+          <div className="signup-blob signup-blob-3" />
+        </div>
+
+        <div className="signup-brand-content">
+          <Link to="/" className="signup-brand-logo">
+            <Leaf className="signup-brand-logo-icon" />
+            <span className="signup-brand-logo-text">
+              <span className="signup-brand-re">Re</span>
+              <span className="signup-brand-serve">Serve</span>
+            </span>
+          </Link>
+
+          <div className="signup-brand-hero">
+            <motion.h1
+              className="signup-brand-title"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              Start making a<br />difference today.
+            </motion.h1>
+            <motion.p
+              className="signup-brand-desc"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              Create your free account and join hundreds of restaurants & NGOs reducing food waste together.
+            </motion.p>
+          </div>
+
+          <div className="signup-brand-features">
+            {features.map((f, i) => (
+              <motion.div
+                key={i}
+                className="signup-brand-feature"
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.6 + i * 0.15, duration: 0.5 }}
+              >
+                <div className="signup-feature-icon">{f.icon}</div>
+                <span>{f.text}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </motion.div>
 
-      <motion.div className="auth-card auth-card-signup"
-        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+      {/* Right panel */}
+      <motion.div
+        className="signup-form-panel"
+        initial={{ x: 60, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        <div className="auth-card-content">
-          <div className="auth-header">
-            <h1 className="auth-title">Create Account</h1>
-            <p className="auth-subtitle">Join us in the fight against food waste</p>
+        {/* Mobile logo */}
+        <div className="signup-mobile-logo">
+          <Link to="/" className="signup-brand-logo">
+            <Leaf className="signup-brand-logo-icon signup-brand-logo-icon--dark" />
+            <span className="signup-brand-logo-text">
+              <span className="signup-brand-re" style={{ color: '#10b981' }}>Re</span>
+              <span className="signup-brand-serve" style={{ color: '#1f2937' }}>Serve</span>
+            </span>
+          </Link>
+        </div>
+
+        <div className="signup-form-wrapper">
+          <div className="signup-form-header">
+            <motion.h2
+              className="signup-form-title"
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Create your account
+            </motion.h2>
+            <motion.p
+              className="signup-form-subtitle"
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              Join the fight against food waste
+            </motion.p>
           </div>
 
-          {error && (
-            <motion.div className="error-message" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-              {error}
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                className="signup-error"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="signup-error-inner">{error}</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div className="user-type-selection user-type-selection-two">
-            <motion.button type="button" className={`user-type-btn ${userType === 'donor' ? 'active' : ''}`}
-              onClick={() => setUserType('donor')} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={loading}>
-              <Building2 className="user-type-icon" /><span>Restaurant / Donor</span>
-            </motion.button>
-            <motion.button type="button" className={`user-type-btn ${userType === 'ngo' ? 'active' : ''}`}
-              onClick={() => setUserType('ngo')} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={loading}>
-              <Heart className="user-type-icon" /><span>NGO</span>
-            </motion.button>
-          </div>
+          {/* User Type Toggle */}
+          <motion.div
+            className="signup-type-toggle"
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.42 }}
+          >
+            <button
+              type="button"
+              className={`signup-type-btn ${userType === 'donor' ? 'active' : ''}`}
+              onClick={() => setUserType('donor')}
+              disabled={loading}
+            >
+              <Building2 className="signup-type-icon" />
+              Restaurant / Donor
+            </button>
+            <button
+              type="button"
+              className={`signup-type-btn ${userType === 'ngo' ? 'active' : ''}`}
+              onClick={() => setUserType('ngo')}
+              disabled={loading}
+            >
+              <Heart className="signup-type-icon" />
+              NGO
+            </button>
+            <button
+              type="button"
+              className={`signup-type-btn ${userType === 'driver' ? 'active' : ''}`}
+              onClick={() => setUserType('driver')}
+              disabled={loading}
+            >
+              <Truck className="signup-type-icon" />
+              Driver
+            </button>
+          </motion.div>
 
-          <form onSubmit={handleSubmit} className="auth-form" noValidate>
-            <div className="form-group">
-              <label className="form-label">Full Name *</label>
-              <div className="input-wrapper">
-                <User className="input-icon" />
-                <input type="text" name="name" value={formData.name} onChange={handleChange}
-                  placeholder="John Doe" className={`form-input ${errors.name ? 'input-error' : ''}`} disabled={loading} />
-              </div>
-              {errors.name && <span className="field-error">{errors.name}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{userType === 'donor' ? 'Restaurant/Business Name *' : 'NGO Name *'}</label>
-              <div className="input-wrapper">
-                <Building2 className="input-icon" />
-                <input type="text" name="organizationName" value={formData.organizationName} onChange={handleChange}
-                  placeholder={userType === 'donor' ? 'Your Restaurant' : 'Your NGO'}
-                  className={`form-input ${errors.organizationName ? 'input-error' : ''}`} disabled={loading} />
-              </div>
-              {errors.organizationName && <span className="field-error">{errors.organizationName}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Email Address *</label>
-              <div className="input-wrapper">
-                <Mail className="input-icon" />
-                <input type="email" name="email" value={formData.email} onChange={handleChange}
-                  placeholder="you@example.com" className={`form-input ${errors.email ? 'input-error' : ''}`} disabled={loading} />
-              </div>
-              {errors.email && <span className="field-error">{errors.email}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Phone Number</label>
-              <div className="input-wrapper">
-                <Phone className="input-icon" />
-                <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
-                  placeholder="+91 98765 43210" className={`form-input ${errors.phone ? 'input-error' : ''}`} disabled={loading} />
-              </div>
-              {errors.phone && <span className="field-error">{errors.phone}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">City *</label>
-              <div className="input-wrapper">
-                <MapPin className="input-icon" />
-                <input type="text" name="city" value={formData.city} onChange={handleChange}
-                  placeholder="Mumbai" className={`form-input ${errors.city ? 'input-error' : ''}`} disabled={loading} />
-              </div>
-              {errors.city && <span className="field-error">{errors.city}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Address</label>
-              <div className="input-wrapper">
-                <MapPin className="input-icon" />
-                <input type="text" name="address" value={formData.address} onChange={handleChange}
-                  placeholder="123 Street, Area" className="form-input" disabled={loading} />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Password *</label>
-              <div className="input-wrapper">
-                <Lock className="input-icon" />
-                <input type={showPassword ? 'text' : 'password'} name="password"
-                  value={formData.password} onChange={handleChange}
-                  placeholder="Create a strong password"
-                  className={`form-input ${errors.password ? 'input-error' : ''}`} disabled={loading} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle" disabled={loading}>
-                  {showPassword ? <EyeOff className="toggle-icon" /> : <Eye className="toggle-icon" />}
-                </button>
-              </div>
-              {errors.password && <span className="field-error">{errors.password}</span>}
-              {formData.password && (
-                <div className="password-strength">
-                  <div className="strength-bar-container">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className={`strength-bar-segment ${i <= strength.level ? `active ${strength.className}` : ''}`} />
-                    ))}
-                  </div>
-                  <span className={`strength-text ${strength.className}`}>{strength.label}</span>
-                </div>
+          <motion.form
+            onSubmit={handleSubmit}
+            className="signup-form"
+            noValidate
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.48 }}
+          >
+            <div className="signup-form-grid">
+              {renderField('name', 'Full Name', <User />, 'John Doe', 'text', true)}
+              {renderField(
+                'organizationName',
+                userType === 'donor' ? 'Business Name' : userType === 'ngo' ? 'NGO Name' : 'Vehicle / Fleet Name',
+                userType === 'driver' ? <Truck /> : <Building2 />,
+                userType === 'donor' ? 'Your Restaurant' : userType === 'ngo' ? 'Your NGO' : 'Optional',
+                'text',
+                userType !== 'driver',
               )}
+              {renderField('email', 'Email Address', <Mail />, 'you@example.com', 'email', true)}
+              {renderField('phone', 'Phone Number', <Phone />, '+91 98765 43210', 'tel')}
+              {renderField('city', 'City', <MapPin />, 'Mumbai', 'text', true)}
+              {renderField('address', 'Address', <MapPin />, '123 Street, Area')}
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Confirm Password *</label>
-              <div className="input-wrapper">
-                <Lock className="input-icon" />
-                <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword"
-                  value={formData.confirmPassword} onChange={handleChange}
-                  placeholder="Confirm your password"
-                  className={`form-input ${errors.confirmPassword ? 'input-error' : ''}`} disabled={loading} />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="password-toggle" disabled={loading}>
-                  {showConfirmPassword ? <EyeOff className="toggle-icon" /> : <Eye className="toggle-icon" />}
-                </button>
-              </div>
-              {errors.confirmPassword && <span className="field-error">{errors.confirmPassword}</span>}
+            <div className="signup-pw-row">
+              {renderPasswordField('password', 'Password', 'Create a strong password', showPassword, () => setShowPassword(!showPassword))}
+              {renderPasswordField('confirmPassword', 'Confirm Password', 'Re-enter password', showConfirmPassword, () => setShowConfirmPassword(!showConfirmPassword))}
             </div>
 
-            <div className="form-group">
-              <label className="checkbox-label checkbox-label-block">
-                <input type="checkbox" className="checkbox-input" required disabled={loading} />
-                <span>
-                  I agree to the <Link to="/terms" className="inline-link">Terms of Service</Link>
-                  {' '}and <Link to="/privacy" className="inline-link">Privacy Policy</Link>
-                </span>
-              </label>
-            </div>
+            {/* Terms */}
+            <label className="signup-terms">
+              <input
+                type="checkbox"
+                checked={agreedTerms}
+                onChange={() => setAgreedTerms(!agreedTerms)}
+                disabled={loading}
+              />
+              <span className="signup-terms-box" />
+              <span className="signup-terms-text">
+                I agree to the <Link to="/terms" className="signup-inline-link">Terms of Service</Link>
+                {' '}and <Link to="/privacy" className="signup-inline-link">Privacy Policy</Link>
+              </span>
+            </label>
 
-            <motion.button type="submit" className="btn-submit"
-              whileHover={!loading ? { scale: 1.02, y: -2 } : {}}
-              whileTap={!loading ? { scale: 0.98 } : {}}
+            {/* Submit */}
+            <motion.button
+              type="submit"
+              className="signup-submit"
+              whileHover={!loading ? { scale: 1.015 } : {}}
+              whileTap={!loading ? { scale: 0.985 } : {}}
               disabled={loading}
             >
               {loading ? (
-                <><div className="spinner-small"></div><span>Creating Account...</span></>
+                <span className="signup-submit-loading">
+                  <span className="signup-spinner" />
+                  Creating Account...
+                </span>
               ) : (
-                <><span>Create Account</span><ArrowRight className="btn-submit-icon" /></>
+                <span className="signup-submit-content">
+                  Create Account
+                  <ArrowRight className="signup-submit-arrow" />
+                </span>
               )}
             </motion.button>
-          </form>
+          </motion.form>
 
-          <div className="auth-divider">
-            <span className="divider-line"></span>
-            <span className="divider-text">or continue with</span>
-            <span className="divider-line"></span>
-          </div>
-
-          <div className="social-buttons">
-            <motion.button className="btn-social" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={loading}>
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="social-icon" />
-              <span>Google</span>
-            </motion.button>
-          </div>
-
-          <p className="auth-footer-text">
+          <p className="signup-footer">
             Already have an account?{' '}
-            <Link to="/login" className="auth-footer-link">Sign in</Link>
+            <Link to="/login" className="signup-footer-link">Sign in</Link>
           </p>
         </div>
       </motion.div>

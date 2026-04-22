@@ -3,9 +3,12 @@ const { db } = require('../db/database');
 function setupSocketHandlers(io) {
   io.on('connection', (socket) => {
     // Join user-specific room for notifications
-    socket.on('joinUserRoom', ({ userId }) => {
+    socket.on('joinUserRoom', ({ userId, userType }) => {
       if (userId) {
         socket.join(`user_${userId}`);
+      }
+      if (userType === 'admin') {
+        socket.join('admins');
       }
     });
 

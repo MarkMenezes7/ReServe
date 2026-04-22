@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, Search, Download } from 'lucide-react';
-import Layout from '../../components/Layout';
+import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { ngoApi } from '../../services/api';
 import './NGOCollectionHistory.css';
@@ -70,7 +70,7 @@ export default function NGOCollectionHistory() {
   }
 
   return (
-    <Layout>
+    <NGOLayout>
       <div className="history-page">
         <div className="history-header">
           <h1><Clock size={24} /> Collection History</h1>
@@ -129,6 +129,6 @@ export default function NGOCollectionHistory() {
           </div>
         )}
       </div>
-    </Layout>
+    </NGOLayout>
   );
 }

@@ -1,0 +1,231 @@
+.al-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f0fdf4;
+}
+
+.al-sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #047857, #059669);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: 1.25rem 0.75rem;
+}
+
+.al-sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 0 0.6rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.al-logo-section {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.58rem;
+  cursor: pointer;
+}
+
+.al-logo-icon {
+  width: 1.7rem;
+  height: 1.7rem;
+  color: #6ee7b7;
+}
+
+.al-logo-text {
+  font-size: 1.32rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.al-user-info {
+  margin: 0.9rem 0.5rem 0.75rem;
+  padding: 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.58rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.al-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.17);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.al-avatar-icon {
+  width: 18px;
+  height: 18px;
+  color: #ffffff;
+}
+
+.al-user-details h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.al-user-badge {
+  display: inline-block;
+  margin-top: 0.14rem;
+  font-size: 0.68rem;
+  padding: 0.16rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ecfdf5;
+}
+
+.al-sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 0.25rem;
+}
+
+.al-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.64rem;
+  width: 100%;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.66rem 0.78rem;
+  text-align: left;
+  font-size: 0.87rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.al-nav-item:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.al-nav-item.active {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+.al-logout-btn {
+  margin: 0.2rem 0.5rem 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 9px;
+  padding: 0.58rem 0.68rem;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.al-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.al-logout-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.al-main {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.al-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.95rem 1.55rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.al-page-title {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.al-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.al-topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: linear-gradient(135deg, #22c55e, #10b981);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.al-topbar-name {
+  font-size: 0.86rem;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.al-content {
+  flex: 1;
+  padding: 1.2rem 1.55rem 1.55rem;
+}
+
+@media (max-width: 1024px) {
+  .al-sidebar {
+    display: none;
+  }
+
+  .al-main {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .al-topbar {
+    padding: 0.75rem 0.9rem;
+  }
+
+  .al-content {
+    padding: 0.9rem;
+  }
+
+  .al-topbar-name {
+    display: none;
+  }
+}

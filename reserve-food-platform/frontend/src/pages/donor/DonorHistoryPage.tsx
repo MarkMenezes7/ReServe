@@ -14,7 +14,7 @@ import {
   TrendingUp,
   Star,
 } from 'lucide-react';
-import Layout from '../../components/Layout';
+import DonorLayout from '../../components/DonorLayout';
 import { useToast } from '../../components/ToastProvider';
 import { donorApi } from '../../services/api';
 import './DonorHistoryPage.css';
@@ -162,17 +162,17 @@ export default function DonorHistoryPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <DonorLayout>
         <div className="history-loading">
           <RefreshCw className="history-spinner" size={32} />
           <p>Loading history...</p>
         </div>
-      </Layout>
+      </DonorLayout>
     );
   }
 
   return (
-    <Layout>
+    <DonorLayout>
       <div className="donor-history">
         {/* Page Header */}
         <div className="history-header">
@@ -401,6 +401,6 @@ export default function DonorHistoryPage() {
           )}
         </motion.div>
       </div>
-    </Layout>
+    </DonorLayout>
   );
 }

@@ -44,6 +44,12 @@ interface Delivery {
   id: number; listingId: number; ngoId: number; claimStatus: string;
   deliveryMethod: string; deliveryFee: number; deliveryDistance: number;
   deliveryStatus: string; scheduledTime: string; createdAt: string;
+  paymentUpiId?: string;
+  paymentTransactionId?: string;
+  paymentScreenshotUrl?: string;
+  paymentStatus?: 'not-required' | 'pending-verification' | 'verified' | 'rejected';
+  paymentVerifiedAt?: string;
+  paymentRejectReason?: string;
   foodName: string; quantity: number; unit: string; pickupLocation: string;
   category: string; storageType: string;
   donorName: string; donorOrg: string; donorPhone: string;
@@ -51,7 +57,7 @@ interface Delivery {
 }
 
 interface DeliveryStats {
-  total: number; pending: number; inTransit: number; delivered: number;
+  total: number; paymentPendingVerification?: number; pending: number; inTransit: number; delivered: number;
   totalRevenue: number; avgDistance: number;
 }
 
@@ -75,6 +81,19 @@ const AdminDashboard = () => {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [deliveryStats, setDeliveryStats] = useState<DeliveryStats | null>(null);
   const [deliveryFilter, setDeliveryFilter] = useState('all');
+
+  // Verification request states
+  interface VerificationRequest {
+    id: number; userId: number; businessName: string; businessType: string;
+    fssaiNumber: string; gstNumber: string; description: string; certificateDetails: string;
+    documentUrl: string | null;
+    status: string; adminNotes: string; submittedAt: string; reviewedAt: string;
+    name: string; email: string; userType: string; organizationName: string; phone: string; city: string;
+  }
+  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([]);
+  const [verificationFilter, setVerificationFilter] = useState('pending');
+  const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
+  const [paymentReviewNotes, setPaymentReviewNotes] = useState<Record<number, string>>({});
 
   // Filter states
   const [userSearch, setUserSearch] = useState('');
@@ -100,6 +119,25 @@ const AdminDashboard = () => {
       if (res.ok) setPendingVerifications(await res.json());
     } catch (err) { console.error('Pending verifications error:', err); }
   }, []);
+
+  const fetchVerificationRequests = useCallback(async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/verification-requests?status=${verificationFilter}`, { headers });
+      if (res.ok) setVerificationRequests(await res.json());
+    } catch (err) { console.error('Verification requests error:', err); }
+  }, [verificationFilter]);
+
+  const handleReviewVerification = async (requestId: number, action: 'approve' | 'reject') => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/verification-requests/${requestId}/review`, {
+        method: 'PATCH', headers, body: JSON.stringify({ action, adminNotes: reviewNotes[requestId] || '' }),
+      });
+      if (res.ok) {
+        await Promise.all([fetchVerificationRequests(), fetchPendingVerifications(), fetchStats()]);
+        setReviewNotes(prev => { const n = { ...prev }; delete n[requestId]; return n; });
+      }
+    } catch (err) { console.error('Review verification error:', err); }
+  };
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -180,7 +218,8 @@ const AdminDashboard = () => {
     if (activeTab === 'reviews') fetchReviews();
     if (activeTab === 'messages') fetchContactMessages();
     if (activeTab === 'deliveries') fetchDeliveries();
-  }, [activeTab, userSearch, userTypeFilter, userVerifiedFilter, listingSearch, listingStatusFilter, claimStatusFilter, deliveryFilter]);
+    if (activeTab === 'verifications') fetchVerificationRequests();
+  }, [activeTab, userSearch, userTypeFilter, userVerifiedFilter, listingSearch, listingStatusFilter, claimStatusFilter, deliveryFilter, verificationFilter]);
 
   const fetchDeliveries = useCallback(async () => {
     try {
@@ -202,6 +241,31 @@ const AdminDashboard = () => {
       });
       if (res.ok) fetchDeliveries();
     } catch (err) { console.error('Delivery status error:', err); }
+  };
+
+  const handleReviewDeliveryPayment = async (claimId: number, action: 'approve' | 'reject') => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/deliveries/${claimId}/payment-review`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ action, adminNotes: paymentReviewNotes[claimId] || '' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'Failed to review payment');
+        return;
+      }
+      setPaymentReviewNotes(prev => {
+        const next = { ...prev };
+        delete next[claimId];
+        return next;
+      });
+      await fetchDeliveries();
+      alert(data.message || 'Payment review updated');
+    } catch (err) {
+      console.error('Delivery payment review error:', err);
+      alert('Failed to review payment');
+    }
   };
 
   // Actions
@@ -271,6 +335,8 @@ const AdminDashboard = () => {
       active: 'badge-green', claimed: 'badge-blue', collected: 'badge-purple',
       expired: 'badge-gray', cancelled: 'badge-red', confirmed: 'badge-blue',
       pending: 'badge-yellow', rejected: 'badge-red', removed: 'badge-red',
+      'payment-pending': 'badge-yellow', 'payment-rejected': 'badge-red',
+      'pending-verification': 'badge-yellow', verified: 'badge-green',
       new: 'badge-blue', read: 'badge-gray', replied: 'badge-green', resolved: 'badge-green',
     };
     return map[status] || 'badge-gray';
@@ -438,6 +504,10 @@ const AdminDashboard = () => {
                 <span style={{ fontWeight: 600, color: '#374151' }}>NGOs</span>
                 <span className="badge badge-blue">{stats.ngos || stats.totalNGOs || 0}</span>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#fff7ed', borderRadius: '8px' }}>
+                <span style={{ fontWeight: 600, color: '#374151' }}>Drivers</span>
+                <span className="badge badge-yellow">{stats.drivers || 0}</span>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f5f3ff', borderRadius: '8px' }}>
                 <span style={{ fontWeight: 600, color: '#374151' }}>Active Listings</span>
                 <span className="badge badge-purple">{stats.activeListings}</span>
@@ -511,52 +581,142 @@ const AdminDashboard = () => {
     return (
       <div className="admin-content-card">
         <div className="card-header">
-          <h2><ShieldCheck size={18} /> Pending Verification Requests</h2>
-          <span className="count-badge">{pendingVerifications.length}</span>
+          <h2><ShieldCheck size={18} /> Verification Requests</h2>
+          <div className="admin-filters">
+            <select className="filter-select" value={verificationFilter} onChange={(e) => setVerificationFilter(e.target.value)}>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="all">All</option>
+            </select>
+          </div>
         </div>
 
-        {pendingVerifications.length === 0 ? (
+        {/* Unverified users (no request submitted yet) */}
+        {verificationFilter === 'pending' && pendingVerifications.length > 0 && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '0.95rem', color: '#6b7280', marginBottom: '0.75rem' }}>Unverified Users (No Request Submitted)</h3>
+            <div className="verification-list">
+              {pendingVerifications
+                .filter(u => !verificationRequests.some(vr => vr.userId === u.id && vr.status === 'pending'))
+                .map((user) => (
+                <motion.div key={user.id} className="verification-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} layout>
+                  <div className={`v-avatar ${user.userType}`}>{user.name.charAt(0).toUpperCase()}</div>
+                  <div className="v-info">
+                    <div className="v-name">{user.name}</div>
+                    <div className="v-org">{user.organizationName || 'No organization'}</div>
+                    <div className="v-meta">
+                      <span><Mail size={12} /> {user.email}</span>
+                      {user.phone && <span><Phone size={12} /> {user.phone}</span>}
+                      {user.city && <span><MapPin size={12} /> {user.city}</span>}
+                      <span><Calendar size={12} /> {formatDate(user.createdAt)}</span>
+                      <span className={`badge ${user.userType === 'donor' ? 'badge-green' : 'badge-blue'}`}>
+                        {user.userType === 'donor' ? 'Donor' : 'NGO'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '4px' }}>No verification request submitted yet</div>
+                  </div>
+                  <div className="v-actions">
+                    <button className="btn-action btn-verify" onClick={() => handleVerifyUser(user.id)}>
+                      <CheckCircle size={14} /> Quick Approve
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Submitted verification requests */}
+        {verificationRequests.length === 0 && pendingVerifications.filter(u => !verificationRequests.some(vr => vr.userId === u.id)).length === 0 ? (
           <div className="admin-empty">
             <div className="empty-icon"><CheckCircle size={28} /></div>
             <h3>All caught up!</h3>
-            <p>No pending verification requests at this time.</p>
+            <p>No verification requests to review.</p>
           </div>
-        ) : (
-          <div className="verification-list">
-            {pendingVerifications.map((user) => (
-              <motion.div
-                key={user.id}
-                className="verification-card"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                layout
-              >
-                <div className={`v-avatar ${user.userType}`}>
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="v-info">
-                  <div className="v-name">{user.name}</div>
-                  <div className="v-org">{user.organizationName || 'No organization'}</div>
-                  <div className="v-meta">
-                    <span><Mail size={12} /> {user.email}</span>
-                    {user.phone && <span><Phone size={12} /> {user.phone}</span>}
-                    {user.city && <span><MapPin size={12} /> {user.city}</span>}
-                    <span><Calendar size={12} /> {formatDate(user.createdAt)}</span>
-                    <span className={`badge ${user.userType === 'donor' ? 'badge-green' : 'badge-blue'}`}>
-                      {user.userType === 'donor' ? 'Donor' : 'NGO'}
-                    </span>
+        ) : verificationRequests.length > 0 && (
+          <div>
+            <h3 style={{ fontSize: '0.95rem', color: '#6b7280', marginBottom: '0.75rem' }}>Submitted Verification Requests</h3>
+            <div className="verification-list">
+              {verificationRequests.map((vr) => (
+                <motion.div key={vr.id} className="verification-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} layout
+                  style={{ flexDirection: 'column', alignItems: 'stretch' }}
+                >
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div className={`v-avatar ${vr.userType}`}>{vr.name.charAt(0).toUpperCase()}</div>
+                    <div className="v-info" style={{ flex: 1 }}>
+                      <div className="v-name">{vr.name}</div>
+                      <div className="v-org">{vr.organizationName || vr.businessName}</div>
+                      <div className="v-meta">
+                        <span><Mail size={12} /> {vr.email}</span>
+                        {vr.phone && <span><Phone size={12} /> {vr.phone}</span>}
+                        {vr.city && <span><MapPin size={12} /> {vr.city}</span>}
+                        <span className={`badge ${vr.status === 'pending' ? 'badge-yellow' : vr.status === 'approved' ? 'badge-green' : 'badge-red'}`}>
+                          {vr.status.charAt(0).toUpperCase() + vr.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="v-actions">
-                  <button className="btn-action btn-verify" onClick={() => handleVerifyUser(user.id)}>
-                    <CheckCircle size={14} /> Approve
-                  </button>
-                  <button className="btn-action btn-danger" onClick={() => handleDeleteUser(user.id)}>
-                    <XCircle size={14} /> Reject
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+
+                  {/* Business Details */}
+                  <div style={{ background: '#f9fafb', borderRadius: '8px', padding: '12px 16px', marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', fontSize: '0.85rem' }}>
+                    <div><span style={{ color: '#6b7280' }}>Business Name:</span> <strong>{vr.businessName}</strong></div>
+                    <div><span style={{ color: '#6b7280' }}>Business Type:</span> <strong style={{ textTransform: 'capitalize' }}>{vr.businessType}</strong></div>
+                    {vr.fssaiNumber && <div><span style={{ color: '#6b7280' }}>FSSAI Number:</span> <strong>{vr.fssaiNumber}</strong></div>}
+                    {vr.gstNumber && <div><span style={{ color: '#6b7280' }}>GST Number:</span> <strong>{vr.gstNumber}</strong></div>}
+                    <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#6b7280' }}>Submitted:</span> {formatDate(vr.submittedAt)}</div>
+                    {vr.description && <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#6b7280' }}>Description:</span> {vr.description}</div>}
+                    {vr.certificateDetails && <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#6b7280' }}>Certificates:</span> {vr.certificateDetails}</div>}
+                    {vr.documentUrl && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <span style={{ color: '#6b7280' }}>Uploaded Document:</span>
+                        <div style={{ marginTop: '8px' }}>
+                          <a href={`http://localhost:5000${vr.documentUrl}`} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={`http://localhost:5000${vr.documentUrl}`}
+                              alt="Verification document"
+                              style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', border: '1px solid #e5e7eb', cursor: 'pointer' }}
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const link = target.parentElement;
+                                if (link) {
+                                  const fallback = document.createElement('span');
+                                  fallback.textContent = 'View Document';
+                                  fallback.style.color = '#2563eb';
+                                  fallback.style.textDecoration = 'underline';
+                                  link.appendChild(fallback);
+                                }
+                              }}
+                            />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                    {vr.adminNotes && <div style={{ gridColumn: '1 / -1', color: '#dc2626' }}><span style={{ color: '#6b7280' }}>Admin Notes:</span> {vr.adminNotes}</div>}
+                  </div>
+
+                  {/* Actions for pending requests */}
+                  {vr.status === 'pending' && (
+                    <div style={{ marginTop: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        className="search-input"
+                        placeholder="Admin notes (optional)..."
+                        value={reviewNotes[vr.id] || ''}
+                        onChange={(e) => setReviewNotes(prev => ({ ...prev, [vr.id]: e.target.value }))}
+                        style={{ flex: 1, fontSize: '0.85rem' }}
+                      />
+                      <button className="btn-action btn-verify" onClick={() => handleReviewVerification(vr.id, 'approve')}>
+                        <CheckCircle size={14} /> Approve
+                      </button>
+                      <button className="btn-action btn-danger" onClick={() => handleReviewVerification(vr.id, 'reject')}>
+                        <XCircle size={14} /> Reject
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -584,6 +744,7 @@ const AdminDashboard = () => {
               <option value="all">All Types</option>
               <option value="donor">Donors</option>
               <option value="ngo">NGOs</option>
+              <option value="driver">Drivers</option>
               <option value="admin">Admins</option>
             </select>
             <select className="filter-select" value={userVerifiedFilter} onChange={(e) => setUserVerifiedFilter(e.target.value)}>
@@ -620,7 +781,7 @@ const AdminDashboard = () => {
                       </div>
                     </td>
                     <td>
-                      <span className={`badge ${user.userType === 'donor' ? 'badge-green' : user.userType === 'ngo' ? 'badge-blue' : 'badge-purple'}`}>
+                      <span className={`badge ${user.userType === 'donor' ? 'badge-green' : user.userType === 'ngo' ? 'badge-blue' : user.userType === 'driver' ? 'badge-yellow' : 'badge-purple'}`}>
                         {user.userType}
                       </span>
                     </td>
@@ -940,6 +1101,13 @@ const AdminDashboard = () => {
                 <div className="stat-label">Pending</div>
               </div>
             </div>
+            <div className="delivery-stat-card pending">
+              <ShieldCheck size={20} />
+              <div>
+                <div className="stat-value">{deliveryStats.paymentPendingVerification || 0}</div>
+                <div className="stat-label">Payment Verify</div>
+              </div>
+            </div>
             <div className="delivery-stat-card transit">
               <Navigation size={20} />
               <div>
@@ -973,18 +1141,25 @@ const AdminDashboard = () => {
 
         <div className="card-header">
           <h2><Truck size={18} /> Platform Deliveries <span className="count-badge">{deliveries.length}</span></h2>
-          <select
-            className="filter-select"
-            value={deliveryFilter}
-            onChange={(e) => setDeliveryFilter(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="assigned">Assigned</option>
-            <option value="in-transit">In Transit</option>
-            <option value="delivered">Delivered</option>
-            <option value="failed">Failed</option>
-          </select>
+          <div className="admin-filters">
+            <button className="btn-action btn-info" onClick={() => navigate('/admin/delivery-map')}>
+              <MapPin size={14} /> Live Map
+            </button>
+            <select
+              className="filter-select"
+              value={deliveryFilter}
+              onChange={(e) => setDeliveryFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="payment-pending">Payment Pending</option>
+              <option value="payment-rejected">Payment Rejected</option>
+              <option value="assigned">Assigned</option>
+              <option value="in-transit">In Transit</option>
+              <option value="delivered">Delivered</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
         </div>
 
         {deliveries.length === 0 ? (
@@ -1004,6 +1179,7 @@ const AdminDashboard = () => {
                   <th>To (NGO)</th>
                   <th>Distance</th>
                   <th>Fee</th>
+                  <th>Payment</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -1031,8 +1207,26 @@ const AdminDashboard = () => {
                         {d.ngoPhone && <span className="email">{d.ngoPhone}</span>}
                       </div>
                     </td>
-                    <td>{d.deliveryDistance} km</td>
+                    <td>{d.deliveryDistance && d.deliveryDistance > 0 ? `${d.deliveryDistance} km` : 'N/A'}</td>
                     <td style={{ fontWeight: 600, color: '#059669' }}>₹{d.deliveryFee}</td>
+                    <td>
+                      <div className="user-name-cell">
+                        <span className={`badge ${getStatusBadge(d.paymentStatus || 'not-required')}`}>
+                          {(d.paymentStatus || 'not-required').replace('-', ' ')}
+                        </span>
+                        {d.paymentTransactionId && <span className="email">Txn: {d.paymentTransactionId}</span>}
+                        {d.paymentScreenshotUrl && (
+                          <a
+                            href={`http://localhost:5000${d.paymentScreenshotUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: '12px', color: '#2563eb', fontWeight: 600 }}
+                          >
+                            View screenshot
+                          </a>
+                        )}
+                      </div>
+                    </td>
                     <td>
                       <span className={`badge ${getStatusBadge(d.deliveryStatus || 'pending')}`}>
                         {d.deliveryStatus || 'pending'}
@@ -1040,23 +1234,45 @@ const AdminDashboard = () => {
                     </td>
                     <td>
                       <div className="btn-actions">
-                        {(!d.deliveryStatus || d.deliveryStatus === 'pending') && (
+                        {d.paymentStatus === 'pending-verification' && (
+                          <>
+                            <input
+                              className="search-input"
+                              placeholder="Notes (optional)"
+                              value={paymentReviewNotes[d.id] || ''}
+                              onChange={(e) => setPaymentReviewNotes(prev => ({ ...prev, [d.id]: e.target.value }))}
+                              style={{ minWidth: '140px', maxWidth: '180px', fontSize: '12px', padding: '6px 8px' }}
+                            />
+                            <button
+                              className="btn-action btn-verify"
+                              onClick={() => handleReviewDeliveryPayment(d.id, 'approve')}
+                              title="Approve payment"
+                            >
+                              <CheckCircle size={14} />
+                            </button>
+                            <button
+                              className="btn-action btn-danger"
+                              onClick={() => handleReviewDeliveryPayment(d.id, 'reject')}
+                              title="Reject payment"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </>
+                        )}
+                        {(d.paymentStatus === 'verified' || !d.paymentStatus || d.paymentStatus === 'not-required') && (!d.deliveryStatus || d.deliveryStatus === 'pending') && (
                           <button
                             className="btn-action btn-info"
-                            onClick={() => handleUpdateDeliveryStatus(d.id, 'assigned')}
-                            title="Assign Driver"
+                            onClick={() => navigate('/admin/delivery-map')}
+                            title="Open Live Map dispatch"
                           >
-                            <UserCheck size={14} />
+                            <MapPin size={14} />
                           </button>
                         )}
                         {d.deliveryStatus === 'assigned' && (
-                          <button
-                            className="btn-action btn-verify"
-                            onClick={() => handleUpdateDeliveryStatus(d.id, 'in-transit')}
-                            title="Mark In Transit"
-                          >
-                            <Truck size={14} />
-                          </button>
+                          <span className="delivery-waiting-claim" title="Driver must claim this delivery from driver dashboard">
+                            <Clock size={14} />
+                            Waiting claim
+                          </span>
                         )}
                         {d.deliveryStatus === 'in-transit' && (
                           <button
@@ -1067,7 +1283,8 @@ const AdminDashboard = () => {
                             <CheckCircle size={14} />
                           </button>
                         )}
-                        {d.deliveryStatus !== 'delivered' && d.deliveryStatus !== 'failed' && (
+                        {(d.paymentStatus === 'verified' || !d.paymentStatus || d.paymentStatus === 'not-required') &&
+                          d.deliveryStatus !== 'delivered' && d.deliveryStatus !== 'failed' && (
                           <button
                             className="btn-action btn-delete"
                             onClick={() => handleUpdateDeliveryStatus(d.id, 'failed')}

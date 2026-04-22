@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Leaf,
   Package,
   TrendingUp,
   Users,
@@ -10,20 +9,18 @@ import {
   Calendar,
   MapPin,
   Clock,
-  LogOut,
   Search,
   Grid,
   List,
-  Sparkles,
-    Menu,
-    X,
-    MessageCircle,
-    Truck,
-    Navigation,
-    DollarSign,
-  } from 'lucide-react';
+  X,
+  Truck,
+  Navigation,
+} from 'lucide-react';
+import NGOLayout from '../../components/NGOLayout';
 import './NGODashboard.css';
 import VerificationBanner from '../../components/common/VerificationBanner';
+
+const WEBSITE_UPI_ID = 'reserve@upi';
 
 interface Stats {
   totalCollections: number;
@@ -65,6 +62,32 @@ interface Claim {
   deliveryFee?: number;
   deliveryDistance?: number;
   deliveryStatus?: string;
+  paymentStatus?: 'not-required' | 'pending-verification' | 'verified' | 'rejected';
+  paymentTransactionId?: string;
+  paymentScreenshotUrl?: string;
+  paymentRejectReason?: string;
+}
+
+interface DeliveryQuoteBreakdown {
+  baseFare: number;
+  baseDistanceKm: number;
+  perKmRate: number;
+  extraDistanceKm: number;
+  distanceFare: number;
+  totalFare: number;
+}
+
+interface DeliveryQuote {
+  deliveryDistance: number;
+  deliveryFee: number;
+  pricingModel: string;
+  breakdown: DeliveryQuoteBreakdown;
+}
+
+const MUMBAI_DEMO_TAG_REGEX = /\s*\[MUMBAI_DEMO_FRESH_[^\]]+\]\s*/gi;
+
+function cleanListingDescription(description?: string): string {
+  return (description || '').replace(MUMBAI_DEMO_TAG_REGEX, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
 const NGODashboard = () => {
@@ -81,16 +104,21 @@ const NGODashboard = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'claims'>('browse');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [claimModal, setClaimModal] = useState<Listing | null>(null);
   const [deliveryMethod, setDeliveryMethod] = useState<'self-pickup' | 'platform-delivery'>('self-pickup');
   const [ngoLocation, setNgoLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [estimatedFee, setEstimatedFee] = useState(0);
+  const [estimatedDistanceKm, setEstimatedDistanceKm] = useState<number | null>(null);
+  const [fareBreakdown, setFareBreakdown] = useState<DeliveryQuoteBreakdown | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState('');
+  const [paymentTransactionId, setPaymentTransactionId] = useState('');
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
+  const [paymentScreenshotPreview, setPaymentScreenshotPreview] = useState('');
   const [claimLoading, setClaimLoading] = useState(false);
   const navigate = useNavigate();
 
   const userId = localStorage.getItem('userId');
-  const userName = localStorage.getItem('userName');
 
   useEffect(() => {
     // Check authentication
@@ -136,6 +164,50 @@ const NGODashboard = () => {
     }
   };
 
+  const fetchDeliveryQuote = async (listing: Listing, coords?: { lat: number; lng: number } | null) => {
+    try {
+      setQuoteLoading(true);
+      setQuoteError('');
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/ngo/delivery-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          listingId: listing.id,
+          ngoLatitude: coords?.lat ?? null,
+          ngoLongitude: coords?.lng ?? null,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to calculate delivery fee');
+      }
+
+      const quote = data as DeliveryQuote;
+      setEstimatedFee(Number(quote.deliveryFee) || 0);
+      setEstimatedDistanceKm(Number(quote.deliveryDistance) || null);
+      setFareBreakdown(quote.breakdown || null);
+    } catch (error) {
+      setEstimatedFee(0);
+      setEstimatedDistanceKm(null);
+      setFareBreakdown(null);
+      setQuoteError((error as Error).message || 'Unable to calculate delivery fee');
+    } finally {
+      setQuoteLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (claimModal && deliveryMethod === 'platform-delivery' && estimatedFee <= 0 && !quoteLoading) {
+      fetchDeliveryQuote(claimModal, ngoLocation);
+    }
+  }, [claimModal, deliveryMethod, ngoLocation]);
+
   const handleClaim = async (listingId: number) => {
     // Called from modal after delivery method is selected
     try {
@@ -143,27 +215,75 @@ const NGODashboard = () => {
       const scheduledTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
       const token = localStorage.getItem('token');
 
-      const response = await fetch('http://localhost:5000/api/ngo/claim', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          listingId,
-          ngoId: userId,
-          scheduledTime,
-          deliveryMethod,
-          ngoLatitude: ngoLocation?.lat || null,
-          ngoLongitude: ngoLocation?.lng || null,
-        }),
-      });
+      let response: Response;
+
+      if (deliveryMethod === 'platform-delivery') {
+        if (quoteLoading) {
+          alert('Please wait while delivery fee is being calculated.');
+          setClaimLoading(false);
+          return;
+        }
+        if (!(estimatedFee > 0) || estimatedDistanceKm == null) {
+          alert('Unable to calculate delivery fee. Please allow location and try again.');
+          setClaimLoading(false);
+          return;
+        }
+        if (!paymentTransactionId.trim()) {
+          alert('Please enter transaction ID.');
+          setClaimLoading(false);
+          return;
+        }
+        if (!paymentScreenshot) {
+          alert('Please upload payment screenshot.');
+          setClaimLoading(false);
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('listingId', String(listingId));
+        formData.append('ngoId', String(userId || ''));
+        formData.append('scheduledTime', scheduledTime);
+        formData.append('deliveryMethod', deliveryMethod);
+        formData.append('ngoLatitude', String(ngoLocation?.lat ?? ''));
+        formData.append('ngoLongitude', String(ngoLocation?.lng ?? ''));
+        formData.append('quotedDeliveryFee', String(estimatedFee));
+        formData.append('quotedDeliveryDistance', String(estimatedDistanceKm));
+        formData.append('paymentTransactionId', paymentTransactionId.trim());
+        formData.append('paymentScreenshot', paymentScreenshot);
+
+        response = await fetch('http://localhost:5000/api/ngo/claim', {
+          method: 'POST',
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: formData,
+        });
+      } else {
+        response = await fetch('http://localhost:5000/api/ngo/claim', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            listingId,
+            ngoId: userId,
+            scheduledTime,
+            deliveryMethod,
+            ngoLatitude: ngoLocation?.lat || null,
+            ngoLongitude: ngoLocation?.lng || null,
+          }),
+        });
+      }
 
       const data = await response.json();
 
       if (response.ok) {
         alert(data.message || 'Food claimed successfully!');
         setClaimModal(null);
+        setPaymentTransactionId('');
+        setPaymentScreenshot(null);
+        setPaymentScreenshotPreview('');
         fetchData();
       } else {
         alert(data.error || 'Failed to claim food');
@@ -179,34 +299,30 @@ const NGODashboard = () => {
   const openClaimModal = (listing: Listing) => {
     setClaimModal(listing);
     setDeliveryMethod('self-pickup');
+    setNgoLocation(null);
     setEstimatedFee(0);
+    setEstimatedDistanceKm(null);
+    setFareBreakdown(null);
+    setQuoteLoading(false);
+    setQuoteError('');
+    setPaymentTransactionId('');
+    setPaymentScreenshot(null);
+    setPaymentScreenshotPreview('');
+
+    fetchDeliveryQuote(listing, null);
+
     // Try to get NGO location for distance calculation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setNgoLocation(loc);
-          // Calculate estimated distance and fee
-          if (listing.latitude && listing.longitude) {
-            const R = 6371;
-            const dLat = (loc.lat - listing.latitude) * Math.PI / 180;
-            const dLon = (loc.lng - listing.longitude) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 +
-              Math.cos(listing.latitude * Math.PI / 180) * Math.cos(loc.lat * Math.PI / 180) *
-              Math.sin(dLon / 2) ** 2;
-            const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            setEstimatedFee(Math.round(30 + dist * 8));
-          }
+          fetchDeliveryQuote(listing, loc);
         },
         () => { /* location denied, no problem */ },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
   };
 
   const handleMarkCollected = async (claimId: number) => {
@@ -266,95 +382,40 @@ const NGODashboard = () => {
 
   const categories = ['all', 'cooked-meals', 'bakery', 'dairy', 'fruits-vegetables', 'packaged-food'];
 
+  const handlePaymentScreenshotChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setPaymentScreenshot(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPaymentScreenshotPreview(url);
+    } else {
+      setPaymentScreenshotPreview('');
+    }
+  };
+
   return (
-    <div className="ngo-dashboard">
-      {/* Sidebar */}
-      <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo-section">
-            <Leaf className="logo-icon" />
-            <span className="logo-text">ReServe</span>
-          </div>
-          <button className="close-sidebar" onClick={() => setSidebarOpen(false)}>
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="user-info">
-          <div className="user-avatar">
-            <Heart className="avatar-icon" />
-          </div>
-          <div className="user-details">
-            <h3>{userName}</h3>
-            <span className="user-badge">NGO</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button
-            className={`nav-item ${activeTab === 'browse' ? 'active' : ''}`}
-            onClick={() => setActiveTab('browse')}
-          >
-            <Package className="nav-icon" />
-            <span>Browse Food</span>
-          </button>
-          <button
-            className={`nav-item ${activeTab === 'claims' ? 'active' : ''}`}
-            onClick={() => setActiveTab('claims')}
-          >
-            <Calendar className="nav-icon" />
-            <span>My Claims</span>
-          </button>
-          <button
-            className="nav-item"
-            onClick={() => navigate('/ngo/forecast')}
-          >
-            <Sparkles className="nav-icon" />
-            <span>ML Forecast</span>
-          </button>
-          <button
-            className="nav-item"
-            onClick={() => navigate('/ngo/impact')}
-          >
-            <TrendingUp className="nav-icon" />
-            <span>Impact</span>
-          </button>
-          <button
-            className="nav-item"
-            onClick={() => navigate('/ngo/map')}
-          >
-            <MapPin className="nav-icon" />
-            <span>Map View</span>
-          </button>
-          <button
-            className="nav-item"
-            onClick={() => navigate('/chat')}
-          >
-            <MessageCircle className="nav-icon" />
-            <span>Chat</span>
-          </button>
-        </nav>
-
-        <button className="logout-btn" onClick={handleLogout}>
-          <LogOut className="logout-icon" />
-          <span>Logout</span>
-        </button>
-      </aside>
-
-      {/* Main Content */}
-      <main className="dashboard-main">
-        {/* Top Bar */}
-        <div className="top-bar">
-          <button className="menu-btn" onClick={() => setSidebarOpen(true)}>
-            <Menu size={24} />
-          </button>
-          <h1 className="page-title">NGO Dashboard</h1>
-          <div className="top-actions">
-            <span className="welcome-text">Welcome, {userName}</span>
-          </div>
-        </div>
+    <NGOLayout>
+      <div className="ngo-dashboard-content">
 
         <VerificationBanner userType="ngo" />
+
+        {/* Tab Switcher */}
+        <div className="dashboard-tabs">
+          <button
+            className={`dashboard-tab ${activeTab === 'browse' ? 'active' : ''}`}
+            onClick={() => setActiveTab('browse')}
+          >
+            <Package size={18} />
+            Browse Food
+          </button>
+          <button
+            className={`dashboard-tab ${activeTab === 'claims' ? 'active' : ''}`}
+            onClick={() => setActiveTab('claims')}
+          >
+            <Calendar size={18} />
+            My Claims
+          </button>
+        </div>
 
         {/* Stats Cards */}
         <div className="stats-grid">
@@ -478,52 +539,55 @@ const NGODashboard = () => {
                 </div>
               ) : (
                 <div className={`listings-grid ${viewMode}`}>
-                  {filteredListings.map((listing) => (
-                    <motion.div
-                      key={listing.id}
-                      className={`listing-card ${getUrgencyColor(listing.bestBefore)}`}
-                      whileHover={{ scale: 1.02, y: -5 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      <div className="listing-header">
-                        <div className="listing-badge">{listing.category}</div>
-                        <div className={`urgency-badge ${getUrgencyColor(listing.bestBefore)}`}>
-                          <Clock size={14} />
-                          {calculateTimeLeft(listing.bestBefore)}
-                        </div>
-                      </div>
-
-                      <h3 className="listing-title">{listing.foodName}</h3>
-                      
-                      <div className="listing-details">
-                        <div className="detail-row">
-                          <Package size={16} />
-                          <span>{listing.quantity} {listing.unit}</span>
-                        </div>
-                        <div className="detail-row">
-                          <Users size={16} />
-                          <span>{listing.organizationName}</span>
-                        </div>
-                        <div className="detail-row">
-                          <MapPin size={16} />
-                          <span>{listing.pickupLocation}</span>
-                        </div>
-                      </div>
-
-                      {listing.description && (
-                        <p className="listing-description">{listing.description}</p>
-                      )}
-
-                      <button
-                        className="claim-btn"
-                        onClick={() => openClaimModal(listing)}
+                  {filteredListings.map((listing) => {
+                    const cleanedDescription = cleanListingDescription(listing.description);
+                    return (
+                      <motion.div
+                        key={listing.id}
+                        className={`listing-card ${getUrgencyColor(listing.bestBefore)}`}
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
                       >
-                        <Heart size={18} />
-                        Claim Food
-                      </button>
-                    </motion.div>
-                  ))}
+                        <div className="listing-header">
+                          <div className="listing-badge">{listing.category}</div>
+                          <div className={`urgency-badge ${getUrgencyColor(listing.bestBefore)}`}>
+                            <Clock size={14} />
+                            {calculateTimeLeft(listing.bestBefore)}
+                          </div>
+                        </div>
+
+                        <h3 className="listing-title">{listing.foodName}</h3>
+
+                        <div className="listing-details">
+                          <div className="detail-row">
+                            <Package size={16} />
+                            <span>{listing.quantity} {listing.unit}</span>
+                          </div>
+                          <div className="detail-row">
+                            <Users size={16} />
+                            <span>{listing.organizationName}</span>
+                          </div>
+                          <div className="detail-row">
+                            <MapPin size={16} />
+                            <span>{listing.pickupLocation}</span>
+                          </div>
+                        </div>
+
+                        {cleanedDescription && (
+                          <p className="listing-description">{cleanedDescription}</p>
+                        )}
+
+                        <button
+                          className="claim-btn"
+                          onClick={() => openClaimModal(listing)}
+                        >
+                          <Heart size={18} />
+                          Claim Food
+                        </button>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -574,11 +638,22 @@ const NGODashboard = () => {
                             <span>{new Date(claim.scheduledTime).toLocaleString()}</span>
                           </div>
                         )}
+                        {claim.paymentStatus === 'rejected' && claim.paymentRejectReason && (
+                          <div className="detail-row">
+                            <X size={16} />
+                            <span>Payment note: {claim.paymentRejectReason}</span>
+                          </div>
+                        )}
                         <div className="detail-row">
                           {claim.deliveryMethod === 'platform-delivery' ? (
                             <>
                               <Truck size={16} />
                               <span>Platform Delivery — ₹{claim.deliveryFee || 0}</span>
+                              {claim.paymentStatus && (
+                                <span className={`payment-badge ${claim.paymentStatus}`}>
+                                  {claim.paymentStatus.replace('-', ' ')}
+                                </span>
+                              )}
                               {claim.deliveryStatus && (
                                 <span className={`delivery-badge ${claim.deliveryStatus}`}>
                                   {claim.deliveryStatus}
@@ -601,8 +676,11 @@ const NGODashboard = () => {
                         <button
                           className="btn-primary"
                           onClick={() => handleMarkCollected(claim.id)}
+                          disabled={claim.deliveryMethod === 'platform-delivery' && claim.deliveryStatus !== 'delivered'}
                         >
-                          Mark Collected
+                          {claim.deliveryMethod === 'platform-delivery' && claim.deliveryStatus !== 'delivered'
+                            ? 'Await Delivery'
+                            : 'Mark Collected'}
                         </button>
                       </div>
                     </motion.div>
@@ -613,7 +691,7 @@ const NGODashboard = () => {
           )}
 
         </div>
-      </main>
+      </div>
 
       {/* Claim Modal with Delivery Options */}
       <AnimatePresence>
@@ -693,23 +771,75 @@ const NGODashboard = () => {
                   <div className="option-content">
                     <strong>Platform Delivery</strong>
                     <p>We'll deliver the food to your location (fee based on distance)</p>
-                    {estimatedFee > 0 ? (
-                      <span className="option-price paid">
-                        <DollarSign size={14} />
-                        Est. ₹{estimatedFee}
-                      </span>
+                    {quoteLoading ? (
+                      <span className="option-price paid">Calculating fare...</span>
+                    ) : estimatedFee > 0 && estimatedDistanceKm != null ? (
+                      <span className="option-price paid">Pay ₹{estimatedFee} ({estimatedDistanceKm} km)</span>
+                    ) : quoteError ? (
+                      <span className="option-price paid">Unable to calculate fare</span>
                     ) : (
-                      <span className="option-price paid">Fee calculated on confirm</span>
+                      <span className="option-price paid">Calculating fare...</span>
                     )}
                   </div>
                 </label>
               </div>
 
               {deliveryMethod === 'platform-delivery' && (
-                <div className="delivery-note">
-                  <Truck size={16} />
-                  <span>Delivery is managed by ReServe admin. You'll receive tracking updates via notifications.</span>
-                </div>
+                <>
+                  <div className="delivery-note">
+                    <Truck size={16} />
+                    <span>Delivery is managed by ReServe admin. You'll receive tracking updates via notifications.</span>
+                  </div>
+
+                  <div className="payment-proof-box">
+                    <h4>Pay Delivery Fee Before Dispatch</h4>
+                    <p className="payment-upi">
+                      Website UPI ID: <strong>{WEBSITE_UPI_ID}</strong>
+                    </p>
+
+                    <div className="payment-amount-row">
+                      <span>Payable Amount</span>
+                      <strong>{estimatedFee > 0 ? `₹${estimatedFee}` : '—'}</strong>
+                    </div>
+                    {estimatedDistanceKm != null && (
+                      <p className="payment-distance-row">
+                        Distance: {estimatedDistanceKm} km
+                      </p>
+                    )}
+                    {fareBreakdown && (
+                      <p className="payment-fare-rule">
+                        Meter model: ₹{fareBreakdown.baseFare} for first {fareBreakdown.baseDistanceKm} km, then ₹{fareBreakdown.perKmRate}/km.
+                      </p>
+                    )}
+                    {quoteLoading && <p className="payment-quote-loading">Calculating delivery fare...</p>}
+                    {!!quoteError && <p className="payment-quote-error">{quoteError}</p>}
+
+                    <label className="payment-field">
+                      <span>Transaction ID</span>
+                      <input
+                        type="text"
+                        value={paymentTransactionId}
+                        onChange={(e) => setPaymentTransactionId(e.target.value)}
+                        placeholder="Enter UPI transaction/reference ID"
+                      />
+                    </label>
+
+                    <label className="payment-field">
+                      <span>Payment Screenshot</span>
+                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePaymentScreenshotChange} />
+                    </label>
+
+                    {paymentScreenshotPreview && (
+                      <div className="payment-preview-wrap">
+                        <img src={paymentScreenshotPreview} alt="Payment screenshot preview" className="payment-preview" />
+                      </div>
+                    )}
+
+                    <p className="payment-help">
+                      After submission, admin verifies transaction ID and screenshot. Only then delivery becomes available for live dispatch tracking.
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="claim-modal-actions">
@@ -719,7 +849,16 @@ const NGODashboard = () => {
                 <button
                   className="btn-confirm-claim"
                   onClick={() => handleClaim(claimModal.id)}
-                  disabled={claimLoading}
+                  disabled={
+                    claimLoading ||
+                    (deliveryMethod === 'platform-delivery' && (
+                      quoteLoading ||
+                      !(estimatedFee > 0) ||
+                      estimatedDistanceKm == null ||
+                      !paymentTransactionId.trim() ||
+                      !paymentScreenshot
+                    ))
+                  }
                 >
                   {claimLoading ? 'Claiming...' : (
                     <>
@@ -733,7 +872,7 @@ const NGODashboard = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </NGOLayout>
   );
 };
 

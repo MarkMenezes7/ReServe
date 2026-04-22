@@ -8,6 +8,7 @@ const { PORT, CORS_ORIGIN } = require('./config');
 const { initializeDatabase, closeDatabase } = require('./db/database');
 const { seedAdmin } = require('./utils/seedAdmin');
 const { setupSocketHandlers } = require('./sockets/chat');
+const { startDeliverySimulation } = require('./services/deliverySimulation');
 
 // Route modules
 const authRoutes = require('./routes/auth');
@@ -18,6 +19,7 @@ const chatRoutes = require('./routes/chat');
 const reviewsRoutes = require('./routes/reviews');
 const notificationsRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
+const driverRoutes = require('./routes/driver');
 const supportRoutes = require('./routes/support');
 const mlRoutes = require('./routes/ml');
 
@@ -42,11 +44,13 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/driver', driverRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/ml', mlRoutes);
 
 // Socket.io
 setupSocketHandlers(io);
+startDeliverySimulation(io);
 
 // Initialize and start
 initializeDatabase();

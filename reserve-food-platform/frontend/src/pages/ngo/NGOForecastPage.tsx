@@ -4,7 +4,7 @@ import {
   Brain, Activity, Clock, BarChart2, TrendingUp, Zap, Layers,
   ChevronUp, ChevronDown, Minus, Sparkles, Radio, Calendar, MapPin,
 } from 'lucide-react';
-import Layout from '../../components/Layout';
+import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { mlApi } from '../../services/api';
 import type { MLForecastHour, MLForecastDay, ForecastSummary, CategoryDistribution, AIInsight, AreaForecast } from '../../types';
@@ -89,7 +89,7 @@ export default function NGOForecastPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <NGOLayout>
         <div className="fc-loading">
           <div className="fc-loading-brain">
             <Brain size={40} />
@@ -99,12 +99,12 @@ export default function NGOForecastPage() {
             <span /><span /><span />
           </div>
         </div>
-      </Layout>
+      </NGOLayout>
     );
   }
 
   return (
-    <Layout>
+    <NGOLayout>
       <div className="fc-page">
         {/* Header */}
         <div className="fc-header">
@@ -414,6 +414,6 @@ export default function NGOForecastPage() {
           </motion.div>
         )}
       </div>
-    </Layout>
+    </NGOLayout>
   );
 }

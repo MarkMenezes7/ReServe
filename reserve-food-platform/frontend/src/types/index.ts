@@ -1,4 +1,4 @@
-export type UserType = 'donor' | 'ngo' | 'admin';
+export type UserType = 'donor' | 'ngo' | 'admin' | 'driver';
 
 export interface User {
   id: number;
@@ -61,6 +61,31 @@ export interface Claim {
   pickupLocation?: string;
   phone?: string;
   donorId?: number;
+  deliveryMethod?: 'self-pickup' | 'platform-delivery';
+  deliveryFee?: number;
+  deliveryDistance?: number;
+  deliveryStatus?: string;
+  paymentUpiId?: string;
+  paymentTransactionId?: string;
+  paymentScreenshotUrl?: string;
+  paymentStatus?: 'not-required' | 'pending-verification' | 'verified' | 'rejected';
+  paymentVerifiedBy?: number;
+  paymentVerifiedAt?: string;
+  paymentRejectReason?: string;
+  driverId?: number;
+  driverName?: string;
+  driverPhone?: string;
+  pickupLat?: number;
+  pickupLng?: number;
+  dropLat?: number;
+  dropLng?: number;
+  dropLocation?: string;
+  driverCurrentLat?: number;
+  driverCurrentLng?: number;
+  driverRouteProgress?: number;
+  driverRouteStage?: 'ready-at-center' | 'to-donor' | 'to-ngo' | 'returning-to-center' | 'completed';
+  dispatchedAt?: string;
+  deliveredAt?: string;
 }
 
 export interface Review {
@@ -147,6 +172,7 @@ export interface AdminStats {
   totalNGOs?: number;
   donors?: number;
   ngos?: number;
+  drivers?: number;
   totalListings: number;
   activeListings: number;
   totalClaims: number;
