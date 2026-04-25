@@ -140,13 +140,23 @@ router.get('/stats/:userId', async (req, res) => {
 // GET /api/ngo/listings
 router.get('/listings', async (req, res) => {
   try {
-    const listings = await dbAll(`
-      SELECT l.*, u.name as donorName, u.organizationName, u.phone as donorPhone
-      FROM listings l
-      JOIN users u ON l.donorId = u.id
-      WHERE l.status = 'active' AND l.bestBefore > datetime('now')
-      ORDER BY l.bestBefore ASC
-    `);
+    const includeInactive = ['1', 'true', 'yes'].includes(String(req.query.includeInactive || '').toLowerCase());
+    const listings = await dbAll(
+      includeInactive
+        ? `
+          SELECT l.*, u.name as donorName, u.organizationName, u.phone as donorPhone
+          FROM listings l
+          JOIN users u ON l.donorId = u.id
+          ORDER BY CASE WHEN l.status = 'active' THEN 0 ELSE 1 END, l.bestBefore ASC
+        `
+        : `
+          SELECT l.*, u.name as donorName, u.organizationName, u.phone as donorPhone
+          FROM listings l
+          JOIN users u ON l.donorId = u.id
+          WHERE l.status = 'active' AND l.bestBefore > datetime('now')
+          ORDER BY l.bestBefore ASC
+        `
+    );
     res.json(listings);
   } catch (error) {
     console.error('NGO listings error:', error);

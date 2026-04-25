@@ -3,6 +3,7 @@ import { Clock, Search, Download } from 'lucide-react';
 import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { ngoApi } from '../../services/api';
+import { subscribeNgoSync } from '../../utils/ngoSync';
 import './NGOCollectionHistory.css';
 
 interface HistoryItem {
@@ -29,6 +30,14 @@ export default function NGOCollectionHistory() {
   const perPage = 10;
 
   useEffect(() => { loadHistory(); }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeNgoSync(() => {
+      void loadHistory();
+    });
+
+    return unsubscribe;
+  }, [userId]);
 
   async function loadHistory() {
     try {

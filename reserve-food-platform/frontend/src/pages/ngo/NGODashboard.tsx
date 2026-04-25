@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Package,
@@ -17,6 +17,8 @@ import {
   Navigation,
 } from 'lucide-react';
 import NGOLayout from '../../components/NGOLayout';
+import { claimsApi, ngoApi } from '../../services/api';
+import { emitNgoSync, subscribeNgoSync } from '../../utils/ngoSync';
 import './NGODashboard.css';
 import VerificationBanner from '../../components/common/VerificationBanner';
 
@@ -33,14 +35,14 @@ interface Listing {
   id: number;
   foodName: string;
   category: string;
-  foodType: string;
+  foodType?: string;
   quantity: number;
   unit: string;
-  description: string;
+  description?: string;
   bestBefore: string;
   pickupLocation: string;
-  donorName: string;
-  organizationName: string;
+  donorName?: string;
+  organizationName?: string;
   status: string;
   latitude?: number;
   longitude?: number;
@@ -49,15 +51,15 @@ interface Listing {
 
 interface Claim {
   id: number;
-  foodName: string;
-  quantity: number;
-  unit: string;
-  donorName: string;
-  organizationName: string;
+  foodName?: string;
+  quantity?: number;
+  unit?: string;
+  donorName?: string;
+  organizationName?: string;
   status: string;
-  scheduledTime: string;
-  pickupLocation: string;
-  phone: string;
+  scheduledTime?: string;
+  pickupLocation?: string;
+  phone?: string;
   deliveryMethod?: string;
   deliveryFee?: number;
   deliveryDistance?: number;
@@ -91,6 +93,13 @@ function cleanListingDescription(description?: string): string {
 }
 
 const NGODashboard = () => {
+  const defaultStats: Stats = {
+    totalCollections: 0,
+    activeClaims: 0,
+    foodCollected: 0,
+    peopleFed: 0,
+  };
+
   const [stats, setStats] = useState<Stats>({
     totalCollections: 0,
     activeClaims: 0,
@@ -118,7 +127,44 @@ const NGODashboard = () => {
   const [claimLoading, setClaimLoading] = useState(false);
   const navigate = useNavigate();
 
-  const userId = localStorage.getItem('userId');
+  const userId = Number(localStorage.getItem('userId') || '0');
+
+  const fetchData = useCallback(async (showLoader = true) => {
+    if (!userId) {
+      setStats(defaultStats);
+      setListings([]);
+      setClaims([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (showLoader) {
+        setLoading(true);
+      }
+
+      const [statsData, listingsData, claimsData] = await Promise.all([
+        ngoApi.getStats(userId),
+        ngoApi.getListings(),
+        ngoApi.getClaims(userId),
+      ]);
+
+      setStats(statsData || defaultStats);
+      setListings((listingsData || []) as unknown as Listing[]);
+      setClaims((claimsData || []) as unknown as Claim[]);
+    } catch (error) {
+      console.error('Error fetching NGO dashboard data:', error);
+      if (showLoader) {
+        setStats(defaultStats);
+        setListings([]);
+        setClaims([]);
+      }
+    } finally {
+      if (showLoader) {
+        setLoading(false);
+      }
+    }
+  }, [userId]);
 
   useEffect(() => {
     // Check authentication
@@ -127,68 +173,28 @@ const NGODashboard = () => {
       return;
     }
 
-    fetchData();
-  }, []);
+    void fetchData();
+  }, [fetchData, navigate]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+  useEffect(() => {
+    const unsubscribe = subscribeNgoSync(() => {
+      void fetchData(false);
+    });
 
-      // Fetch stats
-      const statsRes = await fetch(`http://localhost:5000/api/ngo/stats/${userId}`, { headers });
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData);
-      }
+    return unsubscribe;
+  }, [fetchData]);
 
-      // Fetch available listings
-      const listingsRes = await fetch('http://localhost:5000/api/ngo/listings', { headers });
-      if (listingsRes.ok) {
-        const listingsData = await listingsRes.json();
-        setListings(listingsData);
-      }
-
-      // Fetch claims
-      const claimsRes = await fetch(`http://localhost:5000/api/ngo/claims/${userId}`, { headers });
-      if (claimsRes.ok) {
-        const claimsData = await claimsRes.json();
-        setClaims(claimsData);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setLoading(false);
-    }
-  };
-
-  const fetchDeliveryQuote = async (listing: Listing, coords?: { lat: number; lng: number } | null) => {
+  const fetchDeliveryQuote = useCallback(async (listing: Listing, coords?: { lat: number; lng: number } | null) => {
     try {
       setQuoteLoading(true);
       setQuoteError('');
 
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/ngo/delivery-quote', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          listingId: listing.id,
-          ngoLatitude: coords?.lat ?? null,
-          ngoLongitude: coords?.lng ?? null,
-        }),
-      });
+      const quote = (await ngoApi.getDeliveryQuote({
+        listingId: listing.id,
+        ngoLatitude: coords?.lat ?? null,
+        ngoLongitude: coords?.lng ?? null,
+      })) as DeliveryQuote;
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to calculate delivery fee');
-      }
-
-      const quote = data as DeliveryQuote;
       setEstimatedFee(Number(quote.deliveryFee) || 0);
       setEstimatedDistanceKm(Number(quote.deliveryDistance) || null);
       setFareBreakdown(quote.breakdown || null);
@@ -196,26 +202,31 @@ const NGODashboard = () => {
       setEstimatedFee(0);
       setEstimatedDistanceKm(null);
       setFareBreakdown(null);
-      setQuoteError((error as Error).message || 'Unable to calculate delivery fee');
+      const message = error instanceof Error ? error.message : 'Unable to calculate delivery fee';
+      setQuoteError(message);
     } finally {
       setQuoteLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (claimModal && deliveryMethod === 'platform-delivery' && estimatedFee <= 0 && !quoteLoading) {
-      fetchDeliveryQuote(claimModal, ngoLocation);
+      void fetchDeliveryQuote(claimModal, ngoLocation);
     }
-  }, [claimModal, deliveryMethod, ngoLocation]);
+  }, [claimModal, deliveryMethod, estimatedFee, fetchDeliveryQuote, ngoLocation, quoteLoading]);
 
   const handleClaim = async (listingId: number) => {
     // Called from modal after delivery method is selected
+    if (!userId) {
+      alert('Please login again and retry.');
+      return;
+    }
+
     try {
       setClaimLoading(true);
       const scheduledTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-      const token = localStorage.getItem('token');
 
-      let response: Response;
+      let data: { message: string; claim: Claim };
 
       if (deliveryMethod === 'platform-delivery') {
         if (quoteLoading) {
@@ -241,7 +252,7 @@ const NGODashboard = () => {
 
         const formData = new FormData();
         formData.append('listingId', String(listingId));
-        formData.append('ngoId', String(userId || ''));
+        formData.append('ngoId', String(userId));
         formData.append('scheduledTime', scheduledTime);
         formData.append('deliveryMethod', deliveryMethod);
         formData.append('ngoLatitude', String(ngoLocation?.lat ?? ''));
@@ -251,46 +262,29 @@ const NGODashboard = () => {
         formData.append('paymentTransactionId', paymentTransactionId.trim());
         formData.append('paymentScreenshot', paymentScreenshot);
 
-        response = await fetch('http://localhost:5000/api/ngo/claim', {
-          method: 'POST',
-          headers: {
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: formData,
-        });
+        data = (await ngoApi.claimListing(formData)) as unknown as { message: string; claim: Claim };
       } else {
-        response = await fetch('http://localhost:5000/api/ngo/claim', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            listingId,
-            ngoId: userId,
-            scheduledTime,
-            deliveryMethod,
-            ngoLatitude: ngoLocation?.lat || null,
-            ngoLongitude: ngoLocation?.lng || null,
-          }),
-        });
+        data = (await ngoApi.claimListing({
+          listingId,
+          ngoId: userId,
+          scheduledTime,
+          deliveryMethod,
+          ngoLatitude: ngoLocation?.lat || null,
+          ngoLongitude: ngoLocation?.lng || null,
+        })) as unknown as { message: string; claim: Claim };
       }
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert(data.message || 'Food claimed successfully!');
-        setClaimModal(null);
-        setPaymentTransactionId('');
-        setPaymentScreenshot(null);
-        setPaymentScreenshotPreview('');
-        fetchData();
-      } else {
-        alert(data.error || 'Failed to claim food');
-      }
+      alert(data.message || 'Food claimed successfully!');
+      setClaimModal(null);
+      setPaymentTransactionId('');
+      setPaymentScreenshot(null);
+      setPaymentScreenshotPreview('');
+      await fetchData(false);
+      emitNgoSync('claim-created');
     } catch (error) {
       console.error('Error claiming food:', error);
-      alert('Failed to claim food');
+      const message = error instanceof Error ? error.message : 'Failed to claim food';
+      alert(message);
     } finally {
       setClaimLoading(false);
     }
@@ -309,7 +303,7 @@ const NGODashboard = () => {
     setPaymentScreenshot(null);
     setPaymentScreenshotPreview('');
 
-    fetchDeliveryQuote(listing, null);
+    void fetchDeliveryQuote(listing, null);
 
     // Try to get NGO location for distance calculation
     if (navigator.geolocation) {
@@ -317,7 +311,7 @@ const NGODashboard = () => {
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setNgoLocation(loc);
-          fetchDeliveryQuote(listing, loc);
+          void fetchDeliveryQuote(listing, loc);
         },
         () => { /* location denied, no problem */ },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -327,25 +321,14 @@ const NGODashboard = () => {
 
   const handleMarkCollected = async (claimId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/claims/${claimId}/collect`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (response.ok) {
-        alert('Marked as collected');
-        fetchData();
-      } else {
-        const data = await response.json();
-        alert(data.error || 'Failed to update status');
-      }
+      await claimsApi.collect(claimId);
+      alert('Marked as collected');
+      await fetchData(false);
+      emitNgoSync('claim-collected');
     } catch (error) {
       console.error('Error updating claim:', error);
-      alert('Failed to update status');
+      const message = error instanceof Error ? error.message : 'Failed to update status';
+      alert(message);
     }
   };
 
@@ -375,7 +358,7 @@ const NGODashboard = () => {
 
   const filteredListings = listings.filter(listing => {
     const matchesSearch = listing.foodName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         listing.donorName.toLowerCase().includes(searchQuery.toLowerCase());
+                         (listing.donorName || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'all' || listing.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -566,7 +549,7 @@ const NGODashboard = () => {
                           </div>
                           <div className="detail-row">
                             <Users size={16} />
-                            <span>{listing.organizationName}</span>
+                            <span>{listing.organizationName || listing.donorName || 'Donor'}</span>
                           </div>
                           <div className="detail-row">
                             <MapPin size={16} />
@@ -622,15 +605,15 @@ const NGODashboard = () => {
                       <div className="claim-details">
                         <div className="detail-row">
                           <Package size={16} />
-                          <span>{claim.quantity} {claim.unit}</span>
+                          <span>{claim.quantity || 0} {claim.unit || 'kg'}</span>
                         </div>
                         <div className="detail-row">
                           <Users size={16} />
-                          <span>{claim.organizationName}</span>
+                          <span>{claim.organizationName || claim.donorName || 'Donor'}</span>
                         </div>
                         <div className="detail-row">
                           <MapPin size={16} />
-                          <span>{claim.pickupLocation}</span>
+                          <span>{claim.pickupLocation || 'Pickup location shared in chat'}</span>
                         </div>
                         {claim.scheduledTime && (
                           <div className="detail-row">
@@ -670,6 +653,11 @@ const NGODashboard = () => {
                       </div>
 
                       <div className="claim-actions">
+                        {claim.deliveryMethod === 'platform-delivery' && (
+                          <button className="btn-secondary" onClick={() => navigate('/ngo/delivery-map')}>
+                            Track Delivery
+                          </button>
+                        )}
                         <button className="btn-secondary" onClick={() => navigate('/chat')}>
                           Contact Donor
                         </button>

@@ -95,7 +95,7 @@ export const donorApi = {
 // NGO API
 export const ngoApi = {
   getStats: (userId: number) => apiRequest<import('../types').NGOStats>(`/api/ngo/stats/${userId}`),
-  getListings: () => apiRequest<import('../types').Listing[]>('/api/ngo/listings'),
+  getListings: (includeInactive = false) => apiRequest<import('../types').Listing[]>(`/api/ngo/listings${includeInactive ? '?includeInactive=1' : ''}`),
   getClaims: (userId: number) => apiRequest<import('../types').Claim[]>(`/api/ngo/claims/${userId}`),
   claimListing: (
     data:
@@ -122,6 +122,25 @@ export const ngoApi = {
       body: JSON.stringify(data),
     });
   },
+  getDeliveryQuote: (data: { listingId: number; ngoLatitude?: number | null; ngoLongitude?: number | null }) =>
+    apiRequest<{
+      listingId: number;
+      foodName: string;
+      deliveryDistance: number;
+      deliveryFee: number;
+      pricingModel: string;
+      breakdown: {
+        baseFare: number;
+        baseDistanceKm: number;
+        perKmRate: number;
+        extraDistanceKm: number;
+        distanceFare: number;
+        totalFare: number;
+      };
+    }>('/api/ngo/delivery-quote', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   getDeliveryTracking: (userId: number) => apiRequest<import('../types').Claim[]>(`/api/ngo/delivery-tracking/${userId}`),
   getHistory: (userId: number) => apiRequest<Record<string, unknown>[]>(`/api/ngo/history/${userId}`),
   getImpact: (userId: number) => apiRequest<Record<string, unknown>>(`/api/ngo/impact/${userId}`),

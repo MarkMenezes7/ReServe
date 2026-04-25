@@ -7,6 +7,7 @@ import {
 import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { ngoApi, supportApi, mlApi } from '../../services/api';
+import { subscribeNgoSync } from '../../utils/ngoSync';
 import type { ImpactStats, AIInsight } from '../../types';
 import './NGOImpactDashboard.css';
 
@@ -62,6 +63,14 @@ export default function NGOImpactDashboard() {
   const userId = parseInt(localStorage.getItem('userId') || '0');
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeNgoSync(() => {
+      void loadData();
+    });
+
+    return unsubscribe;
+  }, [userId]);
 
   async function loadData() {
     try {

@@ -24,6 +24,7 @@ import {
 import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { ngoApi, reviewsApi } from '../../services/api';
+import { emitNgoSync, subscribeNgoSync } from '../../utils/ngoSync';
 import type { User as UserType, Review, ReviewStats } from '../../types';
 import ReviewCard from '../../components/ReviewCard';
 import StarRating from '../../components/StarRating';
@@ -87,6 +88,15 @@ export default function NGOProfilePage() {
     fetchVerificationStatus();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = subscribeNgoSync(() => {
+      void fetchProfile();
+      void fetchVerificationStatus();
+    });
+
+    return unsubscribe;
+  }, [userId]);
+
   async function fetchProfile() {
     try {
       setLoading(true);
@@ -148,6 +158,7 @@ export default function NGOProfilePage() {
       setShowVerificationForm(false);
       setVerificationDocument(null);
       fetchVerificationStatus();
+      emitNgoSync('verification-submitted');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit verification';
       showToast(message, 'error');
@@ -182,6 +193,7 @@ export default function NGOProfilePage() {
       if (form.name !== localStorage.getItem('userName')) {
         localStorage.setItem('userName', form.name);
       }
+      emitNgoSync('profile-updated');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to update profile';
       showToast(message, 'error');

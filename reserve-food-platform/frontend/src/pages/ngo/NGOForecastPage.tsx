@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Brain, Activity, Clock, BarChart2, TrendingUp, Zap, Layers,
@@ -6,11 +7,25 @@ import {
 } from 'lucide-react';
 import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
-import { mlApi } from '../../services/api';
-import type { MLForecastHour, MLForecastDay, ForecastSummary, CategoryDistribution, AIInsight, AreaForecast } from '../../types';
+import { mlApi, ngoApi } from '../../services/api';
+import { subscribeNgoSync } from '../../utils/ngoSync';
+import type {
+  AIInsight,
+  AreaForecast,
+  CategoryDistribution,
+  Claim,
+  ForecastSummary,
+  Listing,
+  MLForecastDay,
+  MLForecastHour,
+} from '../../types';
 import './NGOForecastPage.css';
 
-const HOUR_LABELS = ['12a','1a','2a','3a','4a','5a','6a','7a','8a','9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'];
+const HOUR_LABELS = Array.from({ length: 24 }, (_, hour) => {
+  const normalizedHour = hour % 12 === 0 ? 12 : hour % 12;
+  const period = hour < 12 ? 'AM' : 'PM';
+  return `${normalizedHour} ${period}`;
+});
 
 function getHeatColor(probability: number): string {
   if (probability >= 80) return 'var(--heat-hot)';
@@ -39,14 +54,31 @@ export default function NGOForecastPage() {
   const [mlHealth, setMlHealth] = useState<{ status: string; backend?: string } | null>(null);
   const [hourlySource, setHourlySource] = useState('');
   const [loading, setLoading] = useState(true);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [hoverHour, setHoverHour] = useState<number | null>(null);
+  const [selectedHour, setSelectedHour] = useState<number | null>(new Date().getHours());
+  const [isHourPopupOpen, setIsHourPopupOpen] = useState(false);
+  const [rejectedListingIds, setRejectedListingIds] = useState<number[]>([]);
+  const [claimingListingId, setClaimingListingId] = useState<number | null>(null);
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const userId = parseInt(localStorage.getItem('userId') || '0');
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { void loadData(); }, [userId]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeNgoSync(() => {
+      void loadData();
+    });
+
+    return unsubscribe;
+  }, [userId]);
 
   async function loadData() {
+    setLoading(true);
     try {
-      const [h, w, p, s, c, health, ins, areas] = await Promise.all([
+      const [h, w, p, s, c, health, ins, areas, liveListings, liveClaims] = await Promise.all([
         mlApi.getForecast24h().catch(() => ({ forecast: [], source: 'fallback' })),
         mlApi.getForecastWeekly().catch(() => ({ forecast: [], source: 'fallback' })),
         mlApi.getPeakHours().catch(() => ({ hours: [], source: 'fallback' })),
@@ -55,6 +87,8 @@ export default function NGOForecastPage() {
         mlApi.getHealth().catch(() => ({ status: 'offline' })),
         mlApi.getNgoInsights(userId).catch(() => ({ insights: [], count: 0 })),
         mlApi.getAreaForecast().catch(() => ({ areas: [], source: 'fallback' })),
+        ngoApi.getListings().catch(() => []),
+        userId ? ngoApi.getClaims(userId).catch(() => []) : Promise.resolve([]),
       ]);
       setHourlyForecast(h.forecast || []);
       setHourlySource(h.source);
@@ -65,6 +99,8 @@ export default function NGOForecastPage() {
       setMlHealth(health);
       setInsights(ins.insights || []);
       setAreaForecasts(areas.areas || []);
+      setListings(Array.isArray(liveListings) ? liveListings : []);
+      setClaims(Array.isArray(liveClaims) ? liveClaims : []);
     } catch {
       showToast('Failed to load forecast data', 'error');
     } finally {
@@ -86,6 +122,113 @@ export default function NGOForecastPage() {
   const totalExpectedQty = useMemo(() => {
     return weeklyForecast.reduce((sum, d) => sum + d.expectedQuantity, 0);
   }, [weeklyForecast]);
+
+  const getHourFromDateTime = (value?: string): number | null => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.getHours();
+  };
+
+  const formatHourRange = (hour: number): string => {
+    const next = (hour + 1) % 24;
+    const format12Hour = (value: number) => {
+      const normalizedHour = value % 12 === 0 ? 12 : value % 12;
+      const period = value < 12 ? 'AM' : 'PM';
+      return `${normalizedHour}:00 ${period}`;
+    };
+
+    return `${format12Hour(hour)} - ${format12Hour(next)}`;
+  };
+
+  const liveClaims = useMemo(
+    () => claims.filter((claim) => ['pending', 'confirmed'].includes((claim.status || '').toLowerCase())),
+    [claims]
+  );
+
+  const liveClaimListingIds = useMemo(
+    () => new Set(liveClaims.map((claim) => claim.listingId)),
+    [liveClaims]
+  );
+
+  const listingsByHour = useMemo(() => {
+    const buckets = Array.from({ length: 24 }, () => [] as Listing[]);
+    listings.forEach((listing) => {
+      const hour = getHourFromDateTime(listing.availableFrom || listing.createdAt || listing.bestBefore);
+      if (hour === null) return;
+      buckets[hour].push(listing);
+    });
+    return buckets;
+  }, [listings]);
+
+  const claimsByHour = useMemo(() => {
+    const buckets = Array.from({ length: 24 }, () => [] as Claim[]);
+    liveClaims.forEach((claim) => {
+      const hour = getHourFromDateTime(claim.scheduledTime || claim.createdAt);
+      if (hour === null) return;
+      buckets[hour].push(claim);
+    });
+    return buckets;
+  }, [liveClaims]);
+
+  const selectedHourListings = selectedHour === null ? [] : listingsByHour[selectedHour] || [];
+  const selectedHourClaims = selectedHour === null ? [] : claimsByHour[selectedHour] || [];
+  const rejectedListingIdSet = useMemo(() => new Set(rejectedListingIds), [rejectedListingIds]);
+  const selectedHourActiveListings = useMemo(() => {
+    return selectedHourListings.filter((listing) => {
+      const isActive = (listing.status || '').toLowerCase() === 'active';
+      return isActive && !rejectedListingIdSet.has(listing.id);
+    });
+  }, [rejectedListingIdSet, selectedHourListings]);
+
+  function openHourPopup(hour: number) {
+    setSelectedHour(hour);
+    setRejectedListingIds([]);
+    setIsHourPopupOpen(true);
+  }
+
+  function closeHourPopup() {
+    setIsHourPopupOpen(false);
+  }
+
+  function handleRejectRestaurant(listingId: number) {
+    setRejectedListingIds((current) => (current.includes(listingId) ? current : [...current, listingId]));
+    showToast('Removed from this hour popup', 'success');
+  }
+
+  async function handleQuickClaim(listing: Listing) {
+    if (!userId) {
+      showToast('Please login again to claim food', 'error');
+      return;
+    }
+
+    if (liveClaimListingIds.has(listing.id)) {
+      showToast('You already have a live claim for this listing', 'error');
+      return;
+    }
+
+    try {
+      setClaimingListingId(listing.id);
+      await ngoApi.claimListing({
+        listingId: listing.id,
+        ngoId: userId,
+        scheduledTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        deliveryMethod: 'self-pickup',
+      });
+      showToast(`Claimed ${listing.foodName} successfully`, 'success');
+      await loadData();
+      setIsHourPopupOpen(false);
+
+      const listingHour = getHourFromDateTime(listing.availableFrom || listing.createdAt || listing.bestBefore);
+      if (listingHour !== null) {
+        setSelectedHour(listingHour);
+      }
+    } catch {
+      showToast('Failed to claim listing', 'error');
+    } finally {
+      setClaimingListingId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -184,22 +327,49 @@ export default function NGOForecastPage() {
               </div>
             </div>
             <div className="fc-heatmap-grid">
-              {hourlyForecast.map((h, i) => (
-                <motion.div
-                  key={h.hour}
-                  className={`fc-heatmap-cell ${getHeatClass(h.probability)}`}
-                  style={{ '--heat-bg': getHeatColor(h.probability) } as React.CSSProperties}
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + i * 0.02 }}
-                  title={`${h.hour}:00 - ${h.probability}% probability, ~${h.expectedQuantity}kg`}
-                >
-                  <span className="fc-heatmap-hour">{HOUR_LABELS[h.hour]}</span>
-                  <span className="fc-heatmap-prob">{h.probability}%</span>
-                  <span className="fc-heatmap-qty">{h.expectedQuantity}kg</span>
-                </motion.div>
-              ))}
+              {hourlyForecast.map((h, i) => {
+                const hourListings = listingsByHour[h.hour] || [];
+                const hourClaims = claimsByHour[h.hour] || [];
+                return (
+                  <motion.button
+                    key={h.hour}
+                    type="button"
+                    className={`fc-heatmap-cell fc-heatmap-cell-btn ${selectedHour === h.hour ? 'selected' : ''} ${getHeatClass(h.probability)}`}
+                    style={{ '--heat-bg': getHeatColor(h.probability) } as React.CSSProperties}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + i * 0.02 }}
+                    title={`${h.hour}:00 - ${h.probability}% probability, ~${h.expectedQuantity}kg | ${hourListings.length} restaurants | ${hourClaims.length} live claims`}
+                    onMouseEnter={() => setHoverHour(h.hour)}
+                    onMouseLeave={() => setHoverHour(prev => (prev === h.hour ? null : prev))}
+                    onClick={() => openHourPopup(h.hour)}
+                  >
+                    <span className="fc-heatmap-hour">{HOUR_LABELS[h.hour]}</span>
+                    <span className="fc-heatmap-prob">{h.probability}%</span>
+                    <span className="fc-heatmap-qty">{h.expectedQuantity}kg</span>
+                    <span className="fc-heatmap-meta">{hourListings.length} spots • {hourClaims.length} claims</span>
+                  </motion.button>
+                );
+              })}
             </div>
+
+            {hoverHour !== null && (
+              <div className="fc-hour-hover-card">
+                <div className="fc-hour-hover-title">{formatHourRange(hoverHour)}</div>
+                <div className="fc-hour-hover-stats">
+                  <span>{(listingsByHour[hoverHour] || []).length} restaurants</span>
+                  <span>{(claimsByHour[hoverHour] || []).length} live claims</span>
+                </div>
+                {(listingsByHour[hoverHour] || []).length > 0 && (
+                  <div className="fc-hour-hover-list">
+                    {(listingsByHour[hoverHour] || []).slice(0, 3).map((listing) => (
+                      <span key={`hover-${hoverHour}-${listing.id}`}>{listing.organizationName || listing.donorName || listing.foodName}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {topHours.length > 0 && (
               <div className="fc-hot-times">
                 <Zap size={14} />
@@ -211,6 +381,144 @@ export default function NGOForecastPage() {
                   </span>
                 ))}
               </div>
+            )}
+
+            {selectedHour !== null && (
+              <div className="fc-hour-detail-panel">
+                <div className="fc-hour-detail-header">
+                  <div>
+                    <h3>{formatHourRange(selectedHour)}</h3>
+                    <p>Restaurants and live claims in this time window.</p>
+                  </div>
+                  <button type="button" className="fc-open-map-btn" onClick={() => navigate('/ngo/map')}>
+                    Open Map View
+                  </button>
+                </div>
+
+                <div className="fc-hour-detail-grid">
+                  <div className="fc-hour-detail-column">
+                    <h4>Restaurants ({selectedHourActiveListings.length})</h4>
+                    {selectedHourActiveListings.length === 0 ? (
+                      <div className="fc-hour-empty">No active listings for this hour.</div>
+                    ) : (
+                      <div className="fc-hour-list">
+                        {selectedHourActiveListings.map((listing) => {
+                          const alreadyClaimed = liveClaimListingIds.has(listing.id);
+                          const isClaiming = claimingListingId === listing.id;
+                          return (
+                            <div className="fc-hour-item" key={`listing-${listing.id}`}>
+                              <div className="fc-hour-item-top">
+                                <strong>{listing.foodName}</strong>
+                                <span>{listing.quantity} {listing.unit}</span>
+                              </div>
+                              <small>{listing.organizationName || listing.donorName || 'Donor'} • {listing.pickupLocation}</small>
+                              <button
+                                type="button"
+                                className="fc-hour-claim-btn"
+                                disabled={alreadyClaimed || isClaiming}
+                                onClick={() => void handleQuickClaim(listing)}
+                              >
+                                {alreadyClaimed ? 'Already Claimed' : isClaiming ? 'Claiming...' : 'Claim Food'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="fc-hour-detail-column">
+                    <h4>Live Claims ({selectedHourClaims.length})</h4>
+                    {selectedHourClaims.length === 0 ? (
+                      <div className="fc-hour-empty">No live claims for this hour.</div>
+                    ) : (
+                      <div className="fc-hour-list">
+                        {selectedHourClaims.map((claim) => (
+                          <div className="fc-hour-item claim" key={`claim-${claim.id}`}>
+                            <div className="fc-hour-item-top">
+                              <strong>{claim.foodName || 'Claimed Listing'}</strong>
+                              <span>{claim.status}</span>
+                            </div>
+                            <small>{claim.organizationName || claim.donorName || 'Donor'} • {claim.pickupLocation || 'Pickup location shared in claim'}</small>
+                            <span className="fc-hour-claim-state">{claim.deliveryMethod || 'self-pickup'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isHourPopupOpen && selectedHour !== null && (
+              <motion.div
+                className="fc-hour-modal-overlay"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeHourPopup}
+              >
+                <motion.div
+                  className="fc-hour-modal"
+                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.18 }}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="fc-hour-modal-header">
+                    <div>
+                      <h3>{formatHourRange(selectedHour)}</h3>
+                      <p>Active restaurants ready for claim</p>
+                    </div>
+                    <button type="button" className="fc-hour-modal-close" onClick={closeHourPopup}>
+                      Close
+                    </button>
+                  </div>
+
+                  <div className="fc-hour-modal-list">
+                    {selectedHourActiveListings.length === 0 ? (
+                      <div className="fc-hour-empty">No active restaurants available in this time window.</div>
+                    ) : (
+                      selectedHourActiveListings.map((listing) => {
+                        const alreadyClaimed = liveClaimListingIds.has(listing.id);
+                        const isClaiming = claimingListingId === listing.id;
+                        const isRejected = rejectedListingIdSet.has(listing.id);
+
+                        return (
+                          <div className={`fc-hour-modal-item ${isRejected ? 'rejected' : ''}`} key={`modal-listing-${listing.id}`}>
+                            <div className="fc-hour-modal-item-top">
+                              <div>
+                                <strong>{listing.foodName}</strong>
+                                <span>{listing.organizationName || listing.donorName || 'Restaurant'}</span>
+                              </div>
+                              <span className="fc-hour-modal-status">{listing.status}</span>
+                            </div>
+                            <p>{listing.quantity} {listing.unit} • {listing.pickupLocation}</p>
+                            <div className="fc-hour-modal-actions">
+                              <button
+                                type="button"
+                                className="fc-hour-modal-claim"
+                                disabled={alreadyClaimed || isClaiming || isRejected}
+                                onClick={() => void handleQuickClaim(listing)}
+                              >
+                                {alreadyClaimed ? 'Already Claimed' : isClaiming ? 'Claiming...' : 'Claim'}
+                              </button>
+                              <button
+                                type="button"
+                                className="fc-hour-modal-reject"
+                                disabled={isRejected}
+                                onClick={() => handleRejectRestaurant(listing.id)}
+                              >
+                                {isRejected ? 'Rejected' : 'Reject'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
           </motion.div>
 
