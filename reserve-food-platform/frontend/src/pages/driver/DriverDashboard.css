@@ -24,13 +24,14 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  color: #166534;
+  color: #ffffff;
   font-weight: 800;
   font-size: 1.02rem;
 }
 
 .driver-user-card {
-  border: 1px solid #bbf7d0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 0.7rem;
   display: flex;
@@ -44,8 +45,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
   font-weight: 800;
 }
 
@@ -53,11 +54,13 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .driver-user-card span {
-  color: #64748b;
+  color: #d1fae5;
   font-size: 0.78rem;
+  font-weight: 500;
 }
 
 .driver-stats-grid {
@@ -67,9 +70,9 @@
 }
 
 .driver-stats-grid > div {
-  border: 1px solid #bbf7d0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 9px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
   padding: 0.55rem;
   display: flex;
   flex-direction: column;
@@ -77,13 +80,14 @@
 }
 
 .driver-stats-grid strong {
-  font-size: 1rem;
-  color: #166534;
+  font-size: 1.1rem;
+  color: #ffffff;
 }
 
 .driver-stats-grid span {
-  font-size: 0.72rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: #d1fae5;
+  font-weight: 500;
 }
 
 .driver-logout-btn {
@@ -108,6 +112,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .driver-topbar {
@@ -132,7 +137,7 @@
 .driver-page-subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.82rem;
-  color: #6b7280;
+  color: #4b5563;
   font-weight: 500;
 }
 
@@ -164,13 +169,18 @@
 .driver-topbar-name {
   font-size: 0.88rem;
   font-weight: 500;
-  color: #6b7280;
+  color: #4b5563;
+}
+
+.driver-header {
+  padding: 0.8rem 2rem 0;
 }
 
 .driver-header h1 {
   margin: 0;
   font-size: 1.42rem;
   font-weight: 800;
+  color: #111827;
 }
 
 .driver-header p {
@@ -190,7 +200,7 @@
 }
 
 .driver-toolbar {
-  margin-top: 0.8rem;
+  margin: 0.8rem 2rem 0;
   border: 1px solid #bbf7d0;
   border-radius: 10px;
   background: #ffffff;
@@ -211,7 +221,7 @@
 
 .driver-content {
   margin-top: 0.85rem;
-  padding: 0 1rem 1rem;
+  padding: 0 2rem 1rem;
   display: grid;
   grid-template-columns: minmax(320px, 1fr) 360px;
   gap: 1rem;
@@ -263,7 +273,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  max-height: 420px;
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -297,8 +307,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: #475569;
+  color: #334155;
   font-size: 0.8rem;
+  font-weight: 500;
   margin-bottom: 0.3rem;
 }
 

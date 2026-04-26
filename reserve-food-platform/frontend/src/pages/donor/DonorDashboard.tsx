@@ -233,13 +233,6 @@ const DonorDashboard = () => {
           </button>
           <button
             className="nav-item"
-            onClick={() => navigate('/donor/delivery-map')}
-          >
-            <Truck className="nav-icon" />
-            <span>Delivery Map</span>
-          </button>
-          <button
-            className="nav-item"
             onClick={() => navigate('/chat')}
           >
             <MessageCircle className="nav-icon" />
@@ -247,10 +240,24 @@ const DonorDashboard = () => {
           </button>
           <button
             className="nav-item"
+            onClick={() => navigate('/donor/delivery-map')}
+          >
+            <Truck className="nav-icon" />
+            <span>Delivery Map</span>
+          </button>
+          <button
+            className="nav-item"
             onClick={() => navigate('/donor/analytics')}
           >
             <BarChart3 className="nav-icon" />
             <span>Analytics</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate('/donor/history')}
+          >
+            <Clock className="nav-icon" />
+            <span>History</span>
           </button>
           <button
             className="nav-item"

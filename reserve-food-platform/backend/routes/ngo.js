@@ -7,12 +7,65 @@ const { authenticateToken, requireVerified } = require('../middleware/auth');
 
 const router = express.Router();
 const WEBSITE_UPI_ID = process.env.RESERVE_UPI_ID || 'reserve@upi';
-const RICKSHAW_BASE_KM = 1.5;
-const RICKSHAW_BASE_FARE = 23;
-const RICKSHAW_PER_KM = 15;
+const RICKSHAW_BASE_KM = 2;
+const RICKSHAW_BASE_FARE = 45;
+const RICKSHAW_PER_KM = 18;
+
+const LOCATION_TEXT_FALLBACKS = [
+  { keywords: ['borivali west'], lat: 19.232, lng: 72.856 },
+  { keywords: ['borivali east'], lat: 19.2292, lng: 72.8642 },
+  { keywords: ['kandivali west'], lat: 19.2058, lng: 72.851 },
+  { keywords: ['malad west'], lat: 19.1867, lng: 72.8489 },
+  { keywords: ['goregaon west'], lat: 19.1663, lng: 72.8526 },
+  { keywords: ['andheri west'], lat: 19.1364, lng: 72.8296 },
+  { keywords: ['andheri east'], lat: 19.1136, lng: 72.8697 },
+  { keywords: ['vile parle'], lat: 19.1, lng: 72.85 },
+  { keywords: ['bandra west'], lat: 19.0596, lng: 72.8295 },
+  { keywords: ['dadar'], lat: 19.0178, lng: 72.8478 },
+  { keywords: ['marine lines'], lat: 18.9442, lng: 72.8231 },
+  { keywords: ['churchgate'], lat: 18.935, lng: 72.827 },
+  { keywords: ['mumbai'], lat: 19.076, lng: 72.8777 },
+  { keywords: ['navi mumbai'], lat: 19.033, lng: 73.0297 },
+  { keywords: ['thane'], lat: 19.2183, lng: 72.9781 },
+  { keywords: ['delhi'], lat: 28.6139, lng: 77.209 },
+];
 
 function isFiniteCoord(value) {
   return Number.isFinite(Number(value));
+}
+
+function parseNullableCoord(value) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function inferCoordsFromProfile(profile) {
+  const text = `${profile?.address || ''} ${profile?.city || ''} ${profile?.state || ''}`.toLowerCase();
+  if (!text.trim()) return null;
+
+  for (const fallback of LOCATION_TEXT_FALLBACKS) {
+    if (fallback.keywords.some((keyword) => text.includes(keyword))) {
+      return { lat: fallback.lat, lng: fallback.lng };
+    }
+  }
+
+  return null;
+}
+
+function inferCoordsFromText(text) {
+  const lower = (text || '').toLowerCase();
+  if (!lower.trim()) return null;
+
+  for (const fallback of LOCATION_TEXT_FALLBACKS) {
+    if (fallback.keywords.some((keyword) => lower.includes(keyword))) {
+      return { lat: fallback.lat, lng: fallback.lng };
+    }
+  }
+
+  return null;
 }
 
 function computeHaversineDistanceKm(startLat, startLng, endLat, endLng) {
@@ -42,13 +95,31 @@ function calculateRickshawDeliveryFare(distanceKm) {
 }
 
 async function resolveNgoCoordinates(ngoId, inputLat, inputLng) {
-  let ngoLat = Number(inputLat);
-  let ngoLng = Number(inputLng);
+  let ngoLat = parseNullableCoord(inputLat);
+  let ngoLng = parseNullableCoord(inputLng);
 
   if (!Number.isFinite(ngoLat) || !Number.isFinite(ngoLng)) {
-    const ngo = await dbGet('SELECT latitude, longitude FROM users WHERE id = ?', [ngoId]);
-    ngoLat = Number(ngo?.latitude);
-    ngoLng = Number(ngo?.longitude);
+    const ngo = await dbGet('SELECT latitude, longitude, address, city, state FROM users WHERE id = ?', [ngoId]);
+    ngoLat = parseNullableCoord(ngo?.latitude);
+    ngoLng = parseNullableCoord(ngo?.longitude);
+
+    if (!Number.isFinite(ngoLat) || !Number.isFinite(ngoLng)) {
+      const inferredCoords = inferCoordsFromProfile(ngo);
+      if (inferredCoords) {
+        ngoLat = inferredCoords.lat;
+        ngoLng = inferredCoords.lng;
+
+        await dbRun(
+          `UPDATE users
+           SET latitude = COALESCE(latitude, ?),
+               longitude = COALESCE(longitude, ?)
+           WHERE id = ?`,
+          [ngoLat, ngoLng, ngoId]
+        ).catch(() => {
+          // Non-blocking: fee calculation can continue even if we fail to persist inferred coords.
+        });
+      }
+    }
   }
 
   if (!Number.isFinite(ngoLat) || !Number.isFinite(ngoLng)) {
@@ -100,7 +171,7 @@ const paymentStorage = multer.diskStorage({
 
 const paymentUpload = multer({
   storage: paymentStorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /\.(jpg|jpeg|png|webp)$/i;
     if (allowed.test(path.extname(file.originalname))) {
@@ -110,6 +181,23 @@ const paymentUpload = multer({
     }
   },
 });
+
+function handlePaymentUpload(req, res, next) {
+  paymentUpload.single('paymentScreenshot')(req, res, (err) => {
+    if (!err) {
+      return next();
+    }
+
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'Payment screenshot must be under 10 MB' });
+      }
+      return res.status(400).json({ error: `Upload failed: ${err.message}` });
+    }
+
+    return res.status(400).json({ error: err.message || 'Payment screenshot upload failed' });
+  });
+}
 
 router.use(authenticateToken);
 
@@ -265,7 +353,17 @@ router.post('/delivery-quote', requireVerified, async (req, res) => {
     }
 
     if (!isFiniteCoord(listing.latitude) || !isFiniteCoord(listing.longitude)) {
-      return res.status(400).json({ error: 'Donor pickup location is missing coordinates' });
+      const inferredPickup = inferCoordsFromText(listing.pickupLocation);
+      if (inferredPickup) {
+        listing.latitude = inferredPickup.lat;
+        listing.longitude = inferredPickup.lng;
+        dbRun(
+          'UPDATE listings SET latitude = COALESCE(latitude, ?), longitude = COALESCE(longitude, ?) WHERE id = ?',
+          [inferredPickup.lat, inferredPickup.lng, listing.id]
+        ).catch(() => {});
+      } else {
+        return res.status(400).json({ error: 'Donor pickup location is missing coordinates. Please ask the donor to update the listing.' });
+      }
     }
 
     const ngoCoords = await resolveNgoCoordinates(req.user.userId, ngoLatitude, ngoLongitude);
@@ -298,7 +396,7 @@ router.post('/delivery-quote', requireVerified, async (req, res) => {
 });
 
 // POST /api/ngo/claim
-router.post('/claim', requireVerified, paymentUpload.single('paymentScreenshot'), async (req, res) => {
+router.post('/claim', requireVerified, handlePaymentUpload, async (req, res) => {
   try {
     const {
       listingId,
@@ -357,7 +455,17 @@ router.post('/claim', requireVerified, paymentUpload.single('paymentScreenshot')
 
     if (method === 'platform-delivery') {
       if (!isFiniteCoord(listing.latitude) || !isFiniteCoord(listing.longitude)) {
-        return res.status(400).json({ error: 'Donor pickup location is missing coordinates' });
+        const inferredPickup = inferCoordsFromText(listing.pickupLocation);
+        if (inferredPickup) {
+          listing.latitude = inferredPickup.lat;
+          listing.longitude = inferredPickup.lng;
+          dbRun(
+            'UPDATE listings SET latitude = COALESCE(latitude, ?), longitude = COALESCE(longitude, ?) WHERE id = ?',
+            [inferredPickup.lat, inferredPickup.lng, listing.id]
+          ).catch(() => {});
+        } else {
+          return res.status(400).json({ error: 'Donor pickup location is missing coordinates' });
+        }
       }
 
       if (!ngoCoords) {
@@ -438,11 +546,7 @@ router.post('/claim', requireVerified, paymentUpload.single('paymentScreenshot')
     } catch (e) { /* notification failure shouldn't block claim */ }
 
     res.status(201).json({
-      message: method === 'platform-delivery' 
-        ? (deliveryDistance != null
-          ? `Food claimed with platform delivery! Fee: ₹${deliveryFee} (${deliveryDistance} km, rickshaw-meter model). Waiting for admin payment verification.`
-          : `Food claimed with platform delivery! Fee: ₹${deliveryFee}. Waiting for admin payment verification.`)
-        : 'Food claimed successfully! You can now coordinate pickup with the donor.',
+      message: 'Food claimed',
       claim: {
         id: result.lastID,
         listingId: parsedListingId,

@@ -7,6 +7,34 @@ import { useToast } from '../ToastProvider';
 import './NgoDeliveryClaimModal.css';
 
 const WEBSITE_UPI_ID = 'reserve@upi';
+const LAST_KNOWN_LOCATION_KEY = 'reserve:last-known-location';
+
+function getStoredLocation(): { lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem(LAST_KNOWN_LOCATION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { lat?: unknown; lng?: unknown; timestamp?: unknown };
+    const lat = Number(parsed?.lat);
+    const lng = Number(parsed?.lng);
+    const timestamp = Number(parsed?.timestamp);
+    const withinSevenDays = Number.isFinite(timestamp) && (Date.now() - timestamp) <= (7 * 24 * 60 * 60 * 1000);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !withinSevenDays) return null;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+}
+
+function setStoredLocation(lat: number, lng: number): void {
+  try {
+    localStorage.setItem(
+      LAST_KNOWN_LOCATION_KEY,
+      JSON.stringify({ lat, lng, timestamp: Date.now() })
+    );
+  } catch {
+    // Ignore storage failures; live claim flow should continue.
+  }
+}
 
 interface DeliveryQuoteBreakdown {
   baseFare: number;
@@ -60,13 +88,20 @@ export default function NgoDeliveryClaimModal({ listing, onClose, onClaimed }: N
     setPaymentScreenshot(null);
     setPaymentScreenshotPreview('');
 
-    void fetchDeliveryQuote(listing, null);
+    const storedLocation = getStoredLocation();
+    if (storedLocation) {
+      setNgoLocation(storedLocation);
+      void fetchDeliveryQuote(listing, storedLocation);
+    } else {
+      void fetchDeliveryQuote(listing, null);
+    }
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setNgoLocation(loc);
+          setStoredLocation(loc.lat, loc.lng);
           void fetchDeliveryQuote(listing, loc);
         },
         () => {
@@ -142,8 +177,10 @@ export default function NgoDeliveryClaimModal({ listing, onClose, onClaimed }: N
         formData.append('ngoId', String(userId));
         formData.append('scheduledTime', scheduledTime);
         formData.append('deliveryMethod', deliveryMethod);
-        formData.append('ngoLatitude', String(ngoLocation?.lat ?? ''));
-        formData.append('ngoLongitude', String(ngoLocation?.lng ?? ''));
+        if (ngoLocation) {
+          formData.append('ngoLatitude', String(ngoLocation.lat));
+          formData.append('ngoLongitude', String(ngoLocation.lng));
+        }
         formData.append('quotedDeliveryFee', String(estimatedFee));
         formData.append('quotedDeliveryDistance', String(estimatedDistanceKm));
         formData.append('paymentTransactionId', paymentTransactionId.trim());
@@ -156,8 +193,8 @@ export default function NgoDeliveryClaimModal({ listing, onClose, onClaimed }: N
           ngoId: userId,
           scheduledTime,
           deliveryMethod,
-          ngoLatitude: ngoLocation?.lat || null,
-          ngoLongitude: ngoLocation?.lng || null,
+          ngoLatitude: ngoLocation?.lat ?? null,
+          ngoLongitude: ngoLocation?.lng ?? null,
         })) as { message: string; claim: Claim };
       }
 
@@ -176,12 +213,12 @@ export default function NgoDeliveryClaimModal({ listing, onClose, onClaimed }: N
   function handlePaymentScreenshotChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
     setPaymentScreenshot(file);
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPaymentScreenshotPreview(url);
-    } else {
-      setPaymentScreenshotPreview('');
-    }
+    setPaymentScreenshotPreview((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return file ? URL.createObjectURL(file) : '';
+    });
   }
 
   if (!listing) return null;
@@ -255,7 +292,7 @@ export default function NgoDeliveryClaimModal({ listing, onClose, onClaimed }: N
               ) : estimatedFee > 0 && estimatedDistanceKm != null ? (
                 <span className="ngo-option-price paid">Pay Rs {estimatedFee} ({estimatedDistanceKm} km)</span>
               ) : quoteError ? (
-                <span className="ngo-option-price paid">Unable to calculate fare</span>
+                <span className="ngo-option-price paid" style={{ color: '#ef4444', fontSize: '0.82rem' }}>{quoteError}</span>
               ) : (
                 <span className="ngo-option-price paid">Calculating fare...</span>
               )}
@@ -301,10 +338,23 @@ export default function NgoDeliveryClaimModal({ listing, onClose, onClaimed }: N
                 />
               </label>
 
-              <label className="ngo-payment-field">
+              <div className="ngo-payment-field">
                 <span>Payment Screenshot</span>
-                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePaymentScreenshotChange} />
-              </label>
+                <label className="ngo-payment-upload-box" htmlFor="ngo-payment-screenshot-input">
+                  <span className="ngo-payment-upload-action">Choose File</span>
+                  <span className="ngo-payment-upload-filename">
+                    {paymentScreenshot ? paymentScreenshot.name : 'No file chosen yet'}
+                  </span>
+                </label>
+                <input
+                  id="ngo-payment-screenshot-input"
+                  className="ngo-payment-file-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handlePaymentScreenshotChange}
+                />
+                <p className="ngo-payment-upload-hint">Upload PNG, JPG or WEBP (max 10 MB).</p>
+              </div>
 
               {paymentScreenshotPreview && (
                 <div className="ngo-payment-preview-wrap">

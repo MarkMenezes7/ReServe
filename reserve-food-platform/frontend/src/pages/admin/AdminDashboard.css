@@ -192,7 +192,7 @@
 
 .admin-topbar .welcome-text {
   font-size: 14px;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* ===== Stats Grid ===== */
@@ -248,7 +248,7 @@
 
 .admin-stat-card .stat-label {
   font-size: 13px;
-  color: #6b7280;
+  color: #4b5563;
   margin-top: 2px;
 }
 
@@ -305,7 +305,7 @@
   text-align: left;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 12px 16px;
@@ -343,7 +343,7 @@
 .badge.badge-orange  { background: #ffedd5; color: #ea580c; }
 .badge.badge-red     { background: #fee2e2; color: #dc2626; }
 .badge.badge-yellow  { background: #fef3c7; color: #92400e; }
-.badge.badge-gray    { background: #f3f4f6; color: #6b7280; }
+.badge.badge-gray    { background: #f3f4f6; color: #4b5563; }
 .badge.badge-purple  { background: #ede9fe; color: #7c3aed; }
 
 /* ===== Buttons ===== */
@@ -459,7 +459,7 @@
 
 .verification-card .v-info { flex: 1; min-width: 0; }
 .verification-card .v-info .v-name { font-weight: 700; color: #111827; font-size: 15px; }
-.verification-card .v-info .v-org  { font-size: 13px; color: #6b7280; margin-top: 2px; }
+.verification-card .v-info .v-org  { font-size: 13px; color: #4b5563; margin-top: 2px; }
 
 .verification-card .v-info .v-meta {
   display: flex;
@@ -470,7 +470,7 @@
 
 .verification-card .v-info .v-meta span {
   font-size: 12px;
-  color: #9ca3af;
+  color: #4b5563;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -492,7 +492,7 @@
 .admin-empty {
   text-align: center;
   padding: 48px 20px;
-  color: #9ca3af;
+  color: #4b5563;
 }
 
 .admin-empty .empty-icon {
@@ -507,7 +507,7 @@
   color: #d1d5db;
 }
 
-.admin-empty h3 { font-size: 16px; color: #6b7280; margin: 0 0 4px; }
+.admin-empty h3 { font-size: 16px; color: #4b5563; margin: 0 0 4px; }
 .admin-empty p  { font-size: 14px; margin: 0; }
 
 /* ===== Loading ===== */
@@ -531,7 +531,7 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.admin-loading p { font-size: 14px; color: #6b7280; }
+.admin-loading p { font-size: 14px; color: #4b5563; }
 
 /* ===== Quick Actions ===== */
 .quick-actions-grid {
@@ -568,13 +568,13 @@
 }
 
 .quick-action-card .qa-label { font-weight: 600; font-size: 14px; color: #374151; }
-.quick-action-card .qa-desc  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+.quick-action-card .qa-desc  { font-size: 12px; color: #4b5563; margin-top: 2px; }
 
 /* ===== User Detail ===== */
 .user-name-cell { display: flex; flex-direction: column; }
 .user-name-cell .name  { font-weight: 600; color: #111827; }
-.user-name-cell .org   { font-size: 12px; color: #9ca3af; }
-.user-name-cell .email { font-size: 12px; color: #6b7280; }
+.user-name-cell .org   { font-size: 12px; color: #4b5563; }
+.user-name-cell .email { font-size: 12px; color: #4b5563; }
 
 /* ===== Delivery Management ===== */
 .delivery-stats-grid {
@@ -598,7 +598,7 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .delivery-stat-card .stat-value { font-size: 1.5rem; font-weight: 700; }

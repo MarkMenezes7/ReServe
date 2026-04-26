@@ -1235,29 +1235,33 @@ const AdminDashboard = () => {
                     <td>
                       <div className="btn-actions">
                         {d.paymentStatus === 'pending-verification' && (
-                          <>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <input
                               className="search-input"
                               placeholder="Notes (optional)"
                               value={paymentReviewNotes[d.id] || ''}
                               onChange={(e) => setPaymentReviewNotes(prev => ({ ...prev, [d.id]: e.target.value }))}
-                              style={{ minWidth: '140px', maxWidth: '180px', fontSize: '12px', padding: '6px 8px' }}
+                              style={{ width: '100%', minWidth: '120px', fontSize: '12px', padding: '6px 8px' }}
                             />
-                            <button
-                              className="btn-action btn-verify"
-                              onClick={() => handleReviewDeliveryPayment(d.id, 'approve')}
-                              title="Approve payment"
-                            >
-                              <CheckCircle size={14} />
-                            </button>
-                            <button
-                              className="btn-action btn-danger"
-                              onClick={() => handleReviewDeliveryPayment(d.id, 'reject')}
-                              title="Reject payment"
-                            >
-                              <XCircle size={14} />
-                            </button>
-                          </>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                className="btn-action btn-verify"
+                                onClick={() => handleReviewDeliveryPayment(d.id, 'approve')}
+                                title="Approve payment"
+                                style={{ flex: 1, justifyContent: 'center' }}
+                              >
+                                <CheckCircle size={14} />
+                              </button>
+                              <button
+                                className="btn-action btn-danger"
+                                onClick={() => handleReviewDeliveryPayment(d.id, 'reject')}
+                                title="Reject payment"
+                                style={{ flex: 1, justifyContent: 'center' }}
+                              >
+                                <XCircle size={14} />
+                              </button>
+                            </div>
+                          </div>
                         )}
                         {(d.paymentStatus === 'verified' || !d.paymentStatus || d.paymentStatus === 'not-required') && (!d.deliveryStatus || d.deliveryStatus === 'pending') && (
                           <button

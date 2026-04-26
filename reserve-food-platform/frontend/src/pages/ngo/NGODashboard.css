@@ -20,7 +20,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: white;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
@@ -68,7 +68,7 @@
 
 .ngo-dashboard-content .stat-icon { width: 22px; height: 22px; }
 .ngo-dashboard-content .stat-value { font-size: 1.4rem; font-weight: 700; color: #111827; }
-.ngo-dashboard-content .stat-label { font-size: 0.78rem; color: #6b7280; margin-top: 2px; }
+.ngo-dashboard-content .stat-label { font-size: 0.78rem; color: #4b5563; margin-top: 2px; }
 
 /* Content Area */
 .ngo-dashboard-content .content-area { margin-top: 0; }
@@ -93,7 +93,7 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #4b5563;
   pointer-events: none;
 }
 
@@ -114,7 +114,7 @@
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.ngo-dashboard-content .search-box input::placeholder { color: #9ca3af; }
+.ngo-dashboard-content .search-box input::placeholder { color: #4b5563; }
 
 .ngo-dashboard-content .filter-select {
   padding: 10px 12px;
@@ -139,7 +139,7 @@
   padding: 8px 12px;
   border: none;
   background: white;
-  color: #6b7280;
+  color: #4b5563;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -151,7 +151,7 @@
 .ngo-dashboard-content .loading-state {
   text-align: center;
   padding: 48px 0;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.92rem;
 }
 
@@ -161,7 +161,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 0;
-  color: #6b7280;
+  color: #4b5563;
   text-align: center;
   gap: 8px;
 }
@@ -241,14 +241,14 @@
   align-items: center;
   gap: 8px;
   font-size: 0.84rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
-.ngo-dashboard-content .detail-row svg { color: #9ca3af; flex-shrink: 0; }
+.ngo-dashboard-content .detail-row svg { color: #4b5563; flex-shrink: 0; }
 
 .ngo-dashboard-content .listing-description {
   font-size: 0.84rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0 0 12px;
   line-height: 1.4;
 }
@@ -401,7 +401,7 @@
 .claim-modal-header p {
   margin: 4px 0 0;
   font-size: 0.82rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .claim-modal-info {
@@ -497,7 +497,7 @@
 .option-details p {
   margin: 2px 0 0;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
   line-height: 1.35;
 }
 
@@ -710,7 +710,7 @@
 .payment-badge.pending-verification { background: #fff7ed; color: #c2410c; }
 .payment-badge.verified { background: #dcfce7; color: #166534; }
 .payment-badge.rejected { background: #fee2e2; color: #991b1b; }
-.payment-badge.not-required { background: #f3f4f6; color: #6b7280; }
+.payment-badge.not-required { background: #f3f4f6; color: #4b5563; }
 
 .delivery-info {
   display: flex;
@@ -719,7 +719,7 @@
   flex-wrap: wrap;
   margin-top: 6px;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .delivery-info span {

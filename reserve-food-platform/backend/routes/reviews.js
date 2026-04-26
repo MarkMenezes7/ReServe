@@ -61,13 +61,6 @@ router.get('/claim/:claimId', async (req, res) => {
       WHERE r.claimId = ? ORDER BY r.createdAt DESC
     `, [req.params.claimId]);
 
-    reviews.forEach(r => {
-      if (r.isAnonymous) {
-        r.reviewerName = 'Anonymous';
-        r.reviewerOrg = null;
-      }
-    });
-
     res.json(reviews);
   } catch (error) {
     console.error('Get reviews error:', error);
@@ -89,13 +82,6 @@ router.get('/user/:userId', async (req, res) => {
       ORDER BY r.createdAt DESC
     `, [req.params.userId]);
 
-    reviews.forEach(r => {
-      if (r.isAnonymous) {
-        r.reviewerName = 'Anonymous';
-        r.reviewerOrg = null;
-      }
-    });
-
     res.json(reviews);
   } catch (error) {
     console.error('Get user reviews error:', error);
@@ -107,8 +93,8 @@ router.get('/user/:userId', async (req, res) => {
 router.get('/user/:userId/stats', async (req, res) => {
   try {
     const stats = await dbGet(`
-      SELECT AVG(overall) as avgOverall, AVG(foodQuality) as avgQuality,
-             AVG(communication) as avgComm, AVG(timeliness) as avgTime,
+      SELECT COALESCE(AVG(overall), 0) as averageOverall, COALESCE(AVG(foodQuality), 0) as averageFoodQuality,
+             COALESCE(AVG(communication), 0) as averageCommunication, COALESCE(AVG(timeliness), 0) as averageTimeliness,
              COUNT(*) as totalReviews
       FROM reviews WHERE revieweeId = ?
     `, [req.params.userId]);

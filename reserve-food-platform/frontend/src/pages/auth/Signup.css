@@ -171,7 +171,7 @@
 
 .signup-form-subtitle {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
   font-weight: 500;
 }
@@ -205,7 +205,7 @@
   background: #fff;
   border: 1.5px solid #d1d5db;
   border-radius: 0.65rem;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
@@ -286,7 +286,7 @@
 .signup-input-icon {
   flex-shrink: 0;
   display: flex;
-  color: #9ca3af;
+  color: #4b5563;
   transition: color 0.2s;
 }
 
@@ -305,7 +305,7 @@
   color: #111827;
 }
 
-.signup-input::placeholder { color: #9ca3af; }
+.signup-input::placeholder { color: #4b5563; }
 .signup-input:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .signup-eye-btn {
@@ -313,7 +313,7 @@
   background: none;
   border: none;
   padding: 0.15rem;
-  color: #9ca3af;
+  color: #4b5563;
   cursor: pointer;
   display: flex;
   transition: color 0.2s;
@@ -473,7 +473,7 @@
 .signup-footer {
   text-align: center;
   font-size: 0.88rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
   font-weight: 500;
 }

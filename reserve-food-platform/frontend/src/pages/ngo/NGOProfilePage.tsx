@@ -785,9 +785,9 @@ export default function NGOProfilePage() {
                 <div className="profile-rating-overview">
                   <div className="profile-rating-big">
                     <div className="profile-rating-number">
-                      {reviewStats.averageOverall.toFixed(1)}
+                      {(reviewStats.averageOverall || 0).toFixed(1)}
                     </div>
-                    <StarRating value={Math.round(reviewStats.averageOverall)} readonly size="md" />
+                    <StarRating value={Math.round(reviewStats.averageOverall || 0)} readonly size="md" />
                     <div className="profile-rating-count">
                       {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}
                     </div>
@@ -796,23 +796,23 @@ export default function NGOProfilePage() {
                   <div className="profile-rating-breakdown">
                     <div className="profile-rating-row">
                       <span>Food Quality</span>
-                      <StarRating value={Math.round(reviewStats.averageFoodQuality)} readonly size="sm" />
+                      <StarRating value={Math.round(reviewStats.averageFoodQuality || 0)} readonly size="sm" />
                       <span className="profile-rating-val">
-                        {reviewStats.averageFoodQuality.toFixed(1)}
+                        {(reviewStats.averageFoodQuality || 0).toFixed(1)}
                       </span>
                     </div>
                     <div className="profile-rating-row">
                       <span>Communication</span>
-                      <StarRating value={Math.round(reviewStats.averageCommunication)} readonly size="sm" />
+                      <StarRating value={Math.round(reviewStats.averageCommunication || 0)} readonly size="sm" />
                       <span className="profile-rating-val">
-                        {reviewStats.averageCommunication.toFixed(1)}
+                        {(reviewStats.averageCommunication || 0).toFixed(1)}
                       </span>
                     </div>
                     <div className="profile-rating-row">
                       <span>Timeliness</span>
-                      <StarRating value={Math.round(reviewStats.averageTimeliness)} readonly size="sm" />
+                      <StarRating value={Math.round(reviewStats.averageTimeliness || 0)} readonly size="sm" />
                       <span className="profile-rating-val">
-                        {reviewStats.averageTimeliness.toFixed(1)}
+                        {(reviewStats.averageTimeliness || 0).toFixed(1)}
                       </span>
                     </div>
                   </div>

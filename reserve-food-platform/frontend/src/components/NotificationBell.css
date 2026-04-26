@@ -8,7 +8,7 @@
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
-  color: #6b7280;
+  color: #4b5563;
   position: relative;
   transition: background 0.2s, color 0.2s;
 }
@@ -93,7 +93,7 @@
 }
 
 .notification-dropdown-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 2px;
 }
 
@@ -126,20 +126,20 @@
 
 .notification-item-message {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #4b5563;
   line-height: 1.4;
 }
 
 .notification-item-time {
   font-size: 0.72rem;
-  color: #9ca3af;
+  color: #4b5563;
   margin-top: 4px;
 }
 
 .notification-empty {
   padding: 30px 16px;
   text-align: center;
-  color: #9ca3af;
+  color: #4b5563;
   font-size: 0.85rem;
 }
 

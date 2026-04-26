@@ -1,4 +1,5 @@
-const { dbAll, dbRun, closeDatabase } = require('./db/database');
+const bcrypt = require('bcryptjs');
+const { dbAll, dbRun, dbGet, closeDatabase } = require('./db/database');
 
 const MUMBAI_AREAS = [
   { name: 'Borivali West', lat: 19.2320, lng: 72.8560 },
@@ -93,13 +94,128 @@ function toIso(date) {
   return new Date(date).toISOString();
 }
 
-async function getVerifiedDonors() {
+function getMumbaiAreaById(idLike) {
+  return MUMBAI_AREAS[idLike % MUMBAI_AREAS.length];
+}
+
+function donorEmail(index) {
+  return `donor${index}@gmail.com`;
+}
+
+function donorNumberFromEmail(email) {
+  const match = email.match(/^donor(\d+)@gmail\.com$/);
+  return match ? Number(match[1]) : null;
+}
+
+async function getVerifiedDonorsByEmailRange() {
   return dbAll(
     `SELECT id, name, email
      FROM users
-     WHERE userType = 'donor' AND isActive = 1 AND isVerified = 1
+     WHERE userType = 'donor'
+       AND isActive = 1
+       AND isVerified = 1
+       AND email LIKE 'donor%@gmail.com'
      ORDER BY id ASC`
   );
+}
+
+async function ensureDonor1To25Accounts() {
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  for (let i = 1; i <= 25; i += 1) {
+    const email = donorEmail(i);
+    const existing = await dbGet(
+      `SELECT id, userType
+       FROM users
+       WHERE email = ?
+       LIMIT 1`,
+      [email]
+    );
+
+    const area = getMumbaiAreaById(i);
+    const address = `${area.name}, Mumbai`;
+
+    if (existing && existing.userType === 'donor') {
+      await dbRun(
+        `UPDATE users
+         SET isActive = 1,
+             isVerified = 1,
+             city = 'Mumbai',
+             state = 'Maharashtra',
+             address = ?,
+             organizationName = COALESCE(organizationName, ?)
+         WHERE id = ?`,
+        [address, `Mumbai Donor Org ${i}`, existing.id]
+      );
+      continue;
+    }
+
+    if (existing && existing.userType !== 'donor') {
+      continue;
+    }
+
+    await dbRun(
+      `INSERT INTO users (
+        name,
+        email,
+        password,
+        userType,
+        organizationName,
+        phone,
+        address,
+        city,
+        state,
+        bio,
+        isVerified,
+        isActive,
+        createdAt
+      ) VALUES (?, ?, ?, 'donor', ?, ?, ?, 'Mumbai', 'Maharashtra', ?, 1, 1, datetime('now'))`,
+      [
+        `Donor ${i}`,
+        email,
+        hashedPassword,
+        `Mumbai Donor Org ${i}`,
+        `+91 90000${String(i).padStart(5, '0')}`,
+        address,
+        `Presentation donor account ${i} focused on Mumbai operations.`,
+      ]
+    );
+  }
+}
+
+async function getVerifiedNgos() {
+  return dbAll(
+    `SELECT id, name, email
+     FROM users
+     WHERE userType = 'ngo' AND isActive = 1 AND isVerified = 1
+     ORDER BY id ASC`
+  );
+}
+
+async function normalizeUsersToMumbai(donors, ngos) {
+  for (const donor of donors) {
+    const area = getMumbaiAreaById(donor.id + 3);
+    await dbRun(
+      `UPDATE users
+       SET city = 'Mumbai',
+           state = 'Maharashtra',
+           address = ?
+       WHERE id = ?`,
+      [`${area.name}, Mumbai`, donor.id]
+    );
+  }
+
+  for (const ngo of ngos) {
+    const area = getMumbaiAreaById(ngo.id + 7);
+    await dbRun(
+      `UPDATE users
+       SET city = 'Mumbai',
+           state = 'Maharashtra',
+           address = ?
+       WHERE id = ?`,
+      [`${area.name}, Mumbai`, ngo.id]
+    );
+  }
 }
 
 async function listingAlreadySeeded(donorId, foodName, pickupLocation) {
@@ -116,92 +232,128 @@ async function listingAlreadySeeded(donorId, foodName, pickupLocation) {
   return rows.length > 0;
 }
 
+async function getActiveListingIds(donorId) {
+  return dbAll(
+    `SELECT id
+     FROM listings
+     WHERE donorId = ? AND status = 'active'
+     ORDER BY datetime(createdAt) DESC, id DESC`,
+    [donorId]
+  );
+}
+
+async function createMumbaiListing(donor, template, area, templateIdx, sequenceOffset) {
+  const now = new Date();
+  const pickupLocation = `${area.name}, Mumbai`;
+
+  const availableFrom = new Date(now);
+  availableFrom.setMinutes(availableFrom.getMinutes() - (8 + (sequenceOffset * 4)));
+
+  const bestBefore = new Date(now);
+  bestBefore.setHours(bestBefore.getHours() + 34 + ((templateIdx + sequenceOffset) % 10) * 2);
+
+  const createdAt = new Date(now);
+  createdAt.setMinutes(createdAt.getMinutes() - (templateIdx % 60));
+
+  const quantity = template.quantity + ((templateIdx + donor.id + sequenceOffset) % 4);
+  const latOffset = ((donor.id % 5) - 2) * 0.0012;
+  const lngOffset = ((templateIdx % 5) - 2) * 0.0011;
+
+  await dbRun(
+    `INSERT INTO listings (
+      donorId,
+      foodName,
+      category,
+      foodType,
+      quantity,
+      unit,
+      description,
+      images,
+      availableFrom,
+      bestBefore,
+      pickupLocation,
+      latitude,
+      longitude,
+      storageType,
+      packagingType,
+      status,
+      createdAt
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+    [
+      donor.id,
+      template.foodName,
+      template.category,
+      template.foodType,
+      quantity,
+      template.unit,
+      template.description,
+      JSON.stringify([]),
+      toIso(availableFrom),
+      toIso(bestBefore),
+      pickupLocation,
+      Number((area.lat + latOffset).toFixed(6)),
+      Number((area.lng + lngOffset).toFixed(6)),
+      template.storageType,
+      template.packagingType,
+      toIso(createdAt),
+    ]
+  );
+}
+
 async function seedMumbaiListings() {
-  const donors = await getVerifiedDonors();
-  if (!donors.length) {
-    throw new Error('No verified active donors found.');
+  await ensureDonor1To25Accounts();
+
+  const donors = await getVerifiedDonorsByEmailRange();
+  const ngos = await getVerifiedNgos();
+
+  const targetDonors = donors.filter((d) => {
+    const match = d.email.match(/^donor(\d+)@gmail\.com$/);
+    if (!match) return false;
+    const idx = Number(match[1]);
+    return idx >= 1 && idx <= 25;
+  });
+
+  if (!targetDonors.length) {
+    throw new Error('No verified active donors found in donor1@gmail.com to donor25@gmail.com.');
   }
 
-  console.log(`Found ${donors.length} verified active donors.`);
+  if (!ngos.length) {
+    throw new Error('No verified active NGOs found.');
+  }
+
+  console.log(`Found ${targetDonors.length} verified active donors (donor1..donor25).`);
+  console.log(`Found ${ngos.length} verified active NGOs.`);
+
+  await normalizeUsersToMumbai(targetDonors, ngos);
+  console.log('Updated donor/NGO profile locations to Mumbai, Maharashtra.');
 
   const now = new Date();
   let areaIdx = 0;
   let templateIdx = 0;
   let created = 0;
-  let skipped = 0;
+  let deactivated = 0;
 
-  for (const donor of donors) {
-    const perDonor = donor.id % 2 === 0 ? 2 : 3;
+  for (const donor of targetDonors) {
+    const donorNo = donorNumberFromEmail(donor.email);
+    const perDonor = donorNo && donorNo % 2 === 0 ? 2 : 3;
 
-    for (let i = 0; i < perDonor; i += 1) {
+    const existingActive = await getActiveListingIds(donor.id);
+
+    if (existingActive.length > perDonor) {
+      const toDeactivate = existingActive.slice(perDonor);
+      for (const row of toDeactivate) {
+        await dbRun(`UPDATE listings SET status = 'completed' WHERE id = ?`, [row.id]);
+      }
+      deactivated += toDeactivate.length;
+    }
+
+    const activeAfterTrim = await getActiveListingIds(donor.id);
+    const missing = Math.max(0, perDonor - activeAfterTrim.length);
+
+    for (let i = 0; i < missing; i += 1) {
       const template = FOOD_TEMPLATES[templateIdx % FOOD_TEMPLATES.length];
       const area = MUMBAI_AREAS[areaIdx % MUMBAI_AREAS.length];
-
-      const pickupLocation = `${area.name}, Mumbai`;
-
-      const exists = await listingAlreadySeeded(donor.id, template.foodName, pickupLocation);
-      if (exists) {
-        skipped += 1;
-        templateIdx += 1;
-        areaIdx += 1;
-        continue;
-      }
-
-      const availableFrom = new Date(now);
-      availableFrom.setMinutes(availableFrom.getMinutes() - (5 + (i * 3)));
-
-      // Demo-safe window: 34 to 52 hours from now, so it is still active tomorrow.
-      const bestBefore = new Date(now);
-      bestBefore.setHours(bestBefore.getHours() + 34 + ((templateIdx + i) % 10) * 2);
-
-      const createdAt = new Date(now);
-      createdAt.setMinutes(createdAt.getMinutes() - (templateIdx % 120));
-
-      const quantity = template.quantity + ((templateIdx + donor.id + i) % 4);
-      const latOffset = ((donor.id % 5) - 2) * 0.0012;
-      const lngOffset = ((templateIdx % 5) - 2) * 0.0011;
-
-      const description = template.description;
-
-      await dbRun(
-        `INSERT INTO listings (
-          donorId,
-          foodName,
-          category,
-          foodType,
-          quantity,
-          unit,
-          description,
-          images,
-          availableFrom,
-          bestBefore,
-          pickupLocation,
-          latitude,
-          longitude,
-          storageType,
-          packagingType,
-          status,
-          createdAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-        [
-          donor.id,
-          template.foodName,
-          template.category,
-          template.foodType,
-          quantity,
-          template.unit,
-          description,
-          JSON.stringify([]),
-          toIso(availableFrom),
-          toIso(bestBefore),
-          pickupLocation,
-          Number((area.lat + latOffset).toFixed(6)),
-          Number((area.lng + lngOffset).toFixed(6)),
-          template.storageType,
-          template.packagingType,
-          toIso(createdAt),
-        ]
-      );
+      await createMumbaiListing(donor, template, area, templateIdx, i);
 
       created += 1;
       templateIdx += 1;
@@ -211,8 +363,9 @@ async function seedMumbaiListings() {
 
   console.log('----------------------------------------');
   console.log(`Created listings: ${created}`);
-  console.log(`Skipped duplicates: ${skipped}`);
-  console.log(`Donors covered: ${donors.length}`);
+  console.log(`Deactivated extra active listings: ${deactivated}`);
+  console.log(`Donors covered: ${targetDonors.length}`);
+  console.log(`NGOs normalized to Mumbai: ${ngos.length}`);
   console.log('Areas used: Borivali-Andheri-Churchgate side zones only');
   console.log('All seeded listings are active and set with future best-before windows.');
   console.log('----------------------------------------');

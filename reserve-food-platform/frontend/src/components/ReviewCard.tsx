@@ -21,9 +21,9 @@ export default function ReviewCard({ review, showFoodName = false }: ReviewCardP
           </div>
           <div>
             <div className="review-card-name">
-              {review.isAnonymous ? 'Anonymous' : (review.reviewerName || 'User')}
+              {review.reviewerName || 'User'}
             </div>
-            {review.reviewerOrg && !review.isAnonymous && (
+            {review.reviewerOrg && (
               <div className="review-card-org">{review.reviewerOrg}</div>
             )}
           </div>

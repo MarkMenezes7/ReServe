@@ -47,7 +47,6 @@ const ReviewPage = () => {
   const [communication, setCommunication] = useState(0);
   const [timeliness, setTimeliness] = useState(0);
   const [comment, setComment] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false);
 
   useEffect(() => {
     if (!userId || !claimId) {
@@ -73,7 +72,6 @@ const ReviewPage = () => {
         setCommunication(myReview.communication);
         setTimeliness(myReview.timeliness);
         setComment(myReview.comment || '');
-        setIsAnonymous(!!myReview.isAnonymous);
       }
 
       // Load claim details from pending reviews or from claims endpoint
@@ -156,7 +154,6 @@ const ReviewPage = () => {
         communication: communication || overall,
         timeliness: timeliness || overall,
         comment: comment.trim() || undefined,
-        isAnonymous,
       });
 
       showToast('Review submitted successfully!', 'success');
@@ -379,28 +376,6 @@ const ReviewPage = () => {
               )}
               {!existingReview && (
                 <span className="char-count">{comment.length}/500</span>
-              )}
-            </div>
-
-            {/* Anonymous Toggle */}
-            <div className="anonymous-section">
-              {existingReview ? (
-                isAnonymous && (
-                  <div className="anonymous-badge">
-                    <EyeOff size={16} />
-                    <span>This review was submitted anonymously</span>
-                  </div>
-                )
-              ) : (
-                <label className="anonymous-toggle">
-                  <input
-                    type="checkbox"
-                    checked={isAnonymous}
-                    onChange={(e) => setIsAnonymous(e.target.checked)}
-                  />
-                  <EyeOff size={16} />
-                  <span>Submit as anonymous review</span>
-                </label>
               )}
             </div>
 

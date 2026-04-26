@@ -13,6 +13,35 @@ import NgoDeliveryClaimModal from '../../components/common/NgoDeliveryClaimModal
 import './NGOMapPage.css';
 
 const DEFAULT_CENTER: [number, number] = [28.6139, 77.209];
+const MUMBAI_FALLBACK_CENTER = { lat: 19.076, lng: 72.8777 };
+const LAST_KNOWN_LOCATION_KEY = 'reserve:last-known-location';
+
+function getStoredLocation(): { lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem(LAST_KNOWN_LOCATION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { lat?: unknown; lng?: unknown; timestamp?: unknown };
+    const lat = Number(parsed?.lat);
+    const lng = Number(parsed?.lng);
+    const timestamp = Number(parsed?.timestamp);
+    const withinSevenDays = Number.isFinite(timestamp) && (Date.now() - timestamp) <= (7 * 24 * 60 * 60 * 1000);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !withinSevenDays) return null;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+}
+
+function setStoredLocation(lat: number, lng: number): void {
+  try {
+    localStorage.setItem(
+      LAST_KNOWN_LOCATION_KEY,
+      JSON.stringify({ lat, lng, timestamp: Date.now() })
+    );
+  } catch {
+    // Ignore storage failure and continue with in-memory location.
+  }
+}
 
 type HeatmapMode = 'none' | 'density' | 'historical' | 'supply-demand' | 'temporal';
 
@@ -30,6 +59,7 @@ const NGOMapPage = () => {
   const [popupAnchorLatLng, setPopupAnchorLatLng] = useState<{ lat: number; lng: number } | null>(null);
   const [dismissedListingIds, setDismissedListingIds] = useState<number[]>([]);
   const [claimModalListing, setClaimModalListing] = useState<Listing | null>(null);
+  const [viewerLocation, setViewerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const userId = Number(localStorage.getItem('userId') || '0');
@@ -40,12 +70,54 @@ const NGOMapPage = () => {
   const supplyLayerRef = useRef<L.Layer | null>(null);
   const demandLayerRef = useRef<L.Layer | null>(null);
   const heatPointsRef = useRef<L.LayerGroup | null>(null);
+  const hasAutoCenteredViewerRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const stored = getStoredLocation();
+
+    if (stored) {
+      setViewerLocation(stored);
+    }
+
+    if (!navigator.geolocation) {
+      if (!stored) {
+        setViewerLocation(MUMBAI_FALLBACK_CENTER);
+      }
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (cancelled) return;
+        const loc = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setViewerLocation(loc);
+        setStoredLocation(loc.lat, loc.lng);
+      },
+      () => {
+        if (cancelled) return;
+        if (!stored) {
+          setViewerLocation(MUMBAI_FALLBACK_CENTER);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [listingData, claimData] = await Promise.all([
-        ngoApi.getListings(true),
+        ngoApi.getListings(),
         userId ? ngoApi.getClaims(userId) : Promise.resolve([] as Claim[]),
       ]);
 
@@ -87,8 +159,8 @@ const NGOMapPage = () => {
   );
 
   const selectedListing = useMemo(
-    () => listings.find((listing) => listing.id === selectedListingId) || null,
-    [listings, selectedListingId]
+    () => activeListings.find((listing) => listing.id === selectedListingId) || null,
+    [activeListings, selectedListingId]
   );
 
   const distanceKm = useCallback((lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -99,9 +171,33 @@ const NGOMapPage = () => {
     return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }, []);
 
+  const activeListingsWithDistance = useMemo(() => {
+    return activeListings
+      .map((listing, index) => {
+        const lat = Number(listing.latitude);
+        const lng = Number(listing.longitude);
+        const distance =
+          viewerLocation && Number.isFinite(lat) && Number.isFinite(lng)
+            ? distanceKm(viewerLocation.lat, viewerLocation.lng, lat, lng)
+            : null;
+
+        return {
+          listing,
+          distanceKm: distance,
+          originalIndex: index,
+        };
+      })
+      .sort((a, b) => {
+        if (a.distanceKm == null && b.distanceKm == null) return a.originalIndex - b.originalIndex;
+        if (a.distanceKm == null) return 1;
+        if (b.distanceKm == null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+  }, [activeListings, distanceKm, viewerLocation]);
+
   const selectedPopupListings = useMemo(() => {
     if (selectedHeatAnchor) {
-      return listings.filter((listing) => {
+      return activeListings.filter((listing) => {
         if (!listing.latitude || !listing.longitude) return false;
         if (dismissedListingIdSet.has(listing.id)) return false;
         return distanceKm(selectedHeatAnchor.lat, selectedHeatAnchor.lng, listing.latitude, listing.longitude) <= 4;
@@ -113,17 +209,7 @@ const NGOMapPage = () => {
     }
 
     return [];
-  }, [distanceKm, dismissedListingIdSet, listings, selectedHeatAnchor, selectedListing]);
-
-  const selectedPopupActiveListings = useMemo(
-    () => selectedPopupListings.filter((listing) => isListingActive(listing)),
-    [isListingActive, selectedPopupListings]
-  );
-
-  const selectedPopupInactiveListings = useMemo(
-    () => selectedPopupListings.filter((listing) => !isListingActive(listing)),
-    [isListingActive, selectedPopupListings]
-  );
+  }, [activeListings, distanceKm, dismissedListingIdSet, selectedHeatAnchor, selectedListing]);
 
   const openListingPopup = useCallback((listing: Listing) => {
     setSelectedHeatAnchor(null);
@@ -250,13 +336,30 @@ const NGOMapPage = () => {
 
   const focusListing = useCallback((listing: Listing) => {
     if (!leafletMapRef.current || !listing.latitude || !listing.longitude) return;
-    leafletMapRef.current.flyTo([listing.latitude, listing.longitude], 14, { duration: 0.6 });
+    const lat = Number(listing.latitude);
+    const lng = Number(listing.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const targetZoom = Math.max(17, leafletMapRef.current.getZoom());
+    leafletMapRef.current.flyTo([lat, lng], targetZoom, { duration: 0.8, easeLinearity: 0.25 });
   }, []);
+
+  useEffect(() => {
+    if (selectedListingId !== null && !selectedListing) {
+      closePopup();
+    }
+  }, [closePopup, selectedListing, selectedListingId]);
 
   useEffect(() => {
     const timer = setTimeout(() => setMapReady(true), 0);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!leafletMapRef.current || !viewerLocation || hasAutoCenteredViewerRef.current) return;
+    leafletMapRef.current.setView([viewerLocation.lat, viewerLocation.lng], 13);
+    hasAutoCenteredViewerRef.current = true;
+  }, [viewerLocation]);
 
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
@@ -292,15 +395,29 @@ const NGOMapPage = () => {
     if (!leafletMapRef.current || !markersRef.current) return;
     markersRef.current.clearLayers();
 
-    listings
-      .filter(l => l.latitude && l.longitude)
-      .forEach(listing => {
-        const active = isListingActive(listing);
+    if (viewerLocation && Number.isFinite(viewerLocation.lat) && Number.isFinite(viewerLocation.lng)) {
+      const viewerMarker = L.circleMarker([viewerLocation.lat, viewerLocation.lng], {
+        radius: 9,
+        color: '#0284c7',
+        fillColor: '#38bdf8',
+        fillOpacity: 0.9,
+        weight: 3,
+      });
 
-        const marker = L.circleMarker([listing.latitude!, listing.longitude!], {
+      viewerMarker.bindTooltip('You are here', { direction: 'top', offset: [0, -8] });
+      viewerMarker.addTo(markersRef.current);
+    }
+
+    activeListings
+      .filter((listing) => Number.isFinite(Number(listing.latitude)) && Number.isFinite(Number(listing.longitude)))
+      .forEach(listing => {
+        const lat = Number(listing.latitude);
+        const lng = Number(listing.longitude);
+
+        const marker = L.circleMarker([lat, lng], {
           radius: 8,
-          color: active ? '#22c55e' : '#94a3b8',
-          fillColor: active ? '#22c55e' : '#94a3b8',
+          color: '#22c55e',
+          fillColor: '#22c55e',
           fillOpacity: 0.72,
           weight: 2,
         });
@@ -312,7 +429,7 @@ const NGOMapPage = () => {
 
         marker.addTo(markersRef.current!);
       });
-  }, [focusListing, isListingActive, listings, openListingPopup]);
+  }, [activeListings, focusListing, openListingPopup, viewerLocation]);
 
   useEffect(() => {
     const map = leafletMapRef.current;
@@ -326,14 +443,15 @@ const NGOMapPage = () => {
     if (heatmapMode === 'none') return;
 
     const layer = L.layerGroup().addTo(map);
-    listings
-      .filter((listing) => listing.latitude && listing.longitude)
+    activeListings
+      .filter((listing) => Number.isFinite(Number(listing.latitude)) && Number.isFinite(Number(listing.longitude)))
       .forEach((listing) => {
-        const active = isListingActive(listing);
-        const circle = L.circleMarker([listing.latitude!, listing.longitude!], {
+        const lat = Number(listing.latitude);
+        const lng = Number(listing.longitude);
+        const circle = L.circleMarker([lat, lng], {
           radius: 6,
-          color: active ? '#22c55e' : '#94a3b8',
-          fillColor: active ? '#22c55e' : '#94a3b8',
+          color: '#22c55e',
+          fillColor: '#22c55e',
           fillOpacity: 0.28,
           weight: 2,
         });
@@ -347,7 +465,7 @@ const NGOMapPage = () => {
       });
 
     heatPointsRef.current = layer;
-  }, [focusListing, heatmapMode, isListingActive, listings, openHeatPopup]);
+  }, [activeListings, focusListing, heatmapMode, openHeatPopup]);
 
   useEffect(() => {
     const map = leafletMapRef.current;
@@ -519,7 +637,7 @@ const NGOMapPage = () => {
             <div className="map-empty">No active listings yet.</div>
           ) : (
             <div className="map-list">
-              {activeListings.map(listing => {
+              {activeListingsWithDistance.map(({ listing, distanceKm: listingDistanceKm }) => {
                 const alreadyClaimed = claimedListingIds.has(listing.id);
 
                 return (
@@ -531,6 +649,9 @@ const NGOMapPage = () => {
                     <p>{listing.quantity} {listing.unit}</p>
                     <small>{listing.pickupLocation}</small>
                     <small className="map-card-org">{listing.organizationName || listing.donorName || 'Donor'}</small>
+                    <small className="map-card-distance">
+                      {listingDistanceKm == null ? 'Distance unavailable' : `${listingDistanceKm.toFixed(1)} km away`}
+                    </small>
 
                     <div className="map-card-actions">
                       <button
@@ -593,10 +714,10 @@ const NGOMapPage = () => {
 
                 <div className="map-popup-body">
                   <div className="map-popup-section">
-                    <h4>Active Restaurants ({selectedPopupActiveListings.length})</h4>
-                    {selectedPopupActiveListings.length === 0 ? (
+                    <h4>Active Restaurants ({selectedPopupListings.length})</h4>
+                    {selectedPopupListings.length === 0 ? (
                       <div className="map-popup-empty">No active restaurants in this selection.</div>
-                    ) : selectedPopupActiveListings.map((listing) => {
+                    ) : selectedPopupListings.map((listing) => {
                       const alreadyClaimed = claimedListingIds.has(listing.id);
 
                       return (
@@ -627,34 +748,6 @@ const NGOMapPage = () => {
                         </div>
                       );
                     })}
-                  </div>
-
-                  <div className="map-popup-section">
-                    <h4>Inactive Restaurants ({selectedPopupInactiveListings.length})</h4>
-                    {selectedPopupInactiveListings.length === 0 ? (
-                      <div className="map-popup-empty">No inactive restaurants in this selection.</div>
-                    ) : selectedPopupInactiveListings.map((listing) => (
-                      <div className="map-popup-card inactive" key={`inactive-${listing.id}`}>
-                        <div className="map-popup-card-top">
-                          <strong>{listing.foodName}</strong>
-                          <span className="map-popup-badge inactive">{listing.status || 'inactive'}</span>
-                        </div>
-                        <small>{listing.organizationName || listing.donorName || 'Donor'} • {listing.quantity} {listing.unit}</small>
-                        <small>{listing.pickupLocation}</small>
-                        <div className="map-popup-actions">
-                          <button type="button" className="map-popup-accept" disabled>
-                            Accept
-                          </button>
-                          <button
-                            type="button"
-                            className="map-popup-reject"
-                            onClick={() => handleRejectListing(listing.id)}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>

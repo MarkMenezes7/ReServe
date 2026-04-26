@@ -331,10 +331,13 @@ router.get('/history/:userId', async (req, res) => {
       SELECT l.*,
         (SELECT COUNT(*) FROM claims WHERE listingId = l.id) as claimCount,
         (SELECT u.name FROM claims c JOIN users u ON c.ngoId = u.id WHERE c.listingId = l.id AND c.status = 'collected' LIMIT 1) as collectedBy,
-        (SELECT c.collectedAt FROM claims c WHERE c.listingId = l.id AND c.status = 'collected' LIMIT 1) as collectedAt
+        (SELECT u.name FROM claims c JOIN users u ON c.ngoId = u.id WHERE c.listingId = l.id AND c.status = 'collected' LIMIT 1) as claimedBy,
+        (SELECT u.organizationName FROM claims c JOIN users u ON c.ngoId = u.id WHERE c.listingId = l.id AND c.status = 'collected' LIMIT 1) as claimedByOrg,
+        (SELECT c.collectedAt FROM claims c WHERE c.listingId = l.id AND c.status = 'collected' LIMIT 1) as collectedAt,
+        (SELECT r.overall FROM reviews r JOIN claims c ON r.claimId = c.id WHERE c.listingId = l.id AND r.revieweeId = ? LIMIT 1) as rating
       FROM listings l WHERE l.donorId = ?
       ORDER BY l.createdAt DESC
-    `, [userId]);
+    `, [userId, userId]);
     res.json(listings);
   } catch (error) {
     console.error('Donor history error:', error);

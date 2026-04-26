@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Leaf,
 } from 'lucide-react';
+import DonorLayout from '../../components/DonorLayout';
 import './AddListingPage.css';
 
 interface ListingData {
@@ -197,14 +198,11 @@ export default function AddListingPage() {
   };
 
   return (
-    <div className="add-listing-page">
+    <DonorLayout>
+      <div className="add-listing-page">
       {/* Hero Header */}
       <div className="page-hero">
         <div className="page-hero-inner">
-          <button className="back-button" onClick={() => navigate('/donor/dashboard')}>
-            <ArrowLeft size={15} />
-            Back to Dashboard
-          </button>
           <div className="page-hero-label">
             <Leaf size={12} />
             ReServe
@@ -602,9 +600,9 @@ export default function AddListingPage() {
                     </div>
 
                     {/* Summary */}
-                    <div className="review-card">
-                      <div className="review-card-header">Review Your Listing</div>
-                      <div className="review-grid">
+                    <div className="summary-card">
+                      <div className="summary-card-header">Review Your Listing</div>
+                      <div className="summary-grid">
                         {[
                           ['Food', form.foodName || '—'],
                           ['Category', form.category],
@@ -617,9 +615,9 @@ export default function AddListingPage() {
                           ['City', form.city || '—'],
                           ['Pincode', form.pincode || '—'],
                         ].map(([label, value]) => (
-                          <div className="review-item" key={label}>
-                            <div className="review-label">{label}</div>
-                            <div className="review-value">{value}</div>
+                          <div className="summary-item" key={label}>
+                            <div className="summary-label">{label}</div>
+                            <div className="summary-value">{value}</div>
                           </div>
                         ))}
                       </div>
@@ -657,6 +655,7 @@ export default function AddListingPage() {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </DonorLayout>
   );
 }

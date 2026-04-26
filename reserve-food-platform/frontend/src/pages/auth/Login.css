@@ -181,7 +181,7 @@
 
 .login-form-subtitle {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
   font-weight: 500;
 }
@@ -249,7 +249,7 @@
   flex-shrink: 0;
   width: 1.1rem;
   height: 1.1rem;
-  color: #9ca3af;
+  color: #4b5563;
   transition: color 0.2s;
 }
 
@@ -269,7 +269,7 @@
   color: #111827;
 }
 
-.login-input::placeholder { color: #9ca3af; }
+.login-input::placeholder { color: #4b5563; }
 .login-input:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .login-eye-btn {
@@ -277,7 +277,7 @@
   background: none;
   border: none;
   padding: 0.2rem;
-  color: #9ca3af;
+  color: #4b5563;
   cursor: pointer;
   display: flex;
   transition: color 0.2s;
@@ -431,7 +431,7 @@
 .login-footer {
   text-align: center;
   font-size: 0.88rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
   font-weight: 500;
 }

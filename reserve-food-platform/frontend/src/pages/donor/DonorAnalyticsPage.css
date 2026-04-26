@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 /* ===== Variables ===== */
 :root {
@@ -44,8 +44,8 @@
   --r-xl: 26px;
   --r-full: 999px;
 
-  --font: 'Outfit', system-ui, sans-serif;
-  --font-display: 'Outfit', system-ui, sans-serif;
+  --font: 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
 
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --t: all 0.18s var(--ease);
@@ -138,11 +138,11 @@
 .da-hero-right { position: relative; z-index: 1; text-align: right; }
 .da-hero-pill {
   display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: var(--r-lg); padding: 16px 20px; backdrop-filter: blur(8px);
+  background: rgba(16,185,129,0.25); border: 1px solid rgba(52,211,153,0.4);
+  border-radius: var(--r-lg); padding: 16px 24px; backdrop-filter: blur(8px);
 }
-.da-hero-pill-val { font-size: 1.6rem; font-weight: 800; color: white; line-height: 1; }
-.da-hero-pill-lbl { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.da-hero-pill-val { font-size: 1.8rem; font-weight: 800; color: var(--e400); line-height: 1; }
+.da-hero-pill-lbl { font-size: 0.72rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
 
 /* ===== Stat Cards Row ===== */
 .da-stats-grid {

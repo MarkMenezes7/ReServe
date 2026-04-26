@@ -201,7 +201,7 @@
 
 .su-hero-subtitle {
   font-size: 1.15rem;
-  color: #9ca3af;
+  color: #4b5563;
   line-height: 1.75;
   max-width: 42rem;
   margin: 0 auto 2.5rem;
@@ -259,7 +259,7 @@
 
 .su-section-subtitle {
   font-size: 1.1rem;
-  color: #9ca3af;
+  color: #4b5563;
   max-width: 40rem;
   margin: 0 auto;
 }
@@ -326,7 +326,7 @@
 
 .su-stat-label {
   font-size: 0.78rem;
-  color: #9ca3af;
+  color: #4b5563;
   text-align: center;
 }
 
@@ -403,7 +403,7 @@
 
 .su-tier-desc {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: #4b5563;
   line-height: 1.6;
   margin: 0 0 1.5rem;
   flex: 1;
@@ -597,7 +597,7 @@
 
 .su-investor-metric-label {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #4b5563;
   text-align: center;
 }
 
@@ -689,7 +689,7 @@
   padding: 0 1.25rem 1.1rem;
   margin: 0;
   font-size: 0.92rem;
-  color: #9ca3af;
+  color: #4b5563;
   line-height: 1.7;
 }
 
@@ -758,7 +758,7 @@
 
 .su-form-group input::placeholder,
 .su-form-group textarea::placeholder {
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .su-form-group input:focus,
@@ -898,7 +898,7 @@
 
 .su-badge-default {
   background: rgba(156, 163, 175, 0.15);
-  color: #9ca3af;
+  color: #4b5563;
 }
 
 .su-wall-message {
@@ -914,7 +914,7 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* -------------------- 9. TRUST BADGES / FOOTER -------------------- */
@@ -961,7 +961,7 @@
 
 .su-trust-badge span {
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: #4b5563;
 }
 
 .su-footer-bottom {
@@ -988,7 +988,7 @@
 }
 
 .su-footer-tagline {
-  color: #9ca3af;
+  color: #4b5563;
   font-size: 0.92rem;
   margin: 0 0 1.5rem;
 }
@@ -1002,7 +1002,7 @@
 }
 
 .su-footer-links a {
-  color: #6b7280;
+  color: #4b5563;
   text-decoration: none;
   font-size: 0.88rem;
   transition: color 0.25s;

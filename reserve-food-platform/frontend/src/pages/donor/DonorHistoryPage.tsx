@@ -19,7 +19,7 @@ import { useToast } from '../../components/ToastProvider';
 import { donorApi } from '../../services/api';
 import './DonorHistoryPage.css';
 
-type StatusFilter = 'all' | 'active' | 'claimed' | 'collected' | 'expired';
+type StatusFilter = 'all' | 'active' | 'claimed' | 'collected' | 'completed' | 'expired';
 
 interface HistoryEntry {
   id: number;
@@ -105,6 +105,7 @@ export default function DonorHistoryPage() {
       case 'claimed':
         return <Clock size={14} className="history-status-icon claimed" />;
       case 'collected':
+      case 'completed':
         return <CheckCircle size={14} className="history-status-icon collected" />;
       case 'expired':
         return <AlertCircle size={14} className="history-status-icon expired" />;
@@ -261,6 +262,7 @@ export default function DonorHistoryPage() {
               <option value="active">Active</option>
               <option value="claimed">Claimed</option>
               <option value="collected">Collected</option>
+              <option value="completed">Completed</option>
               <option value="expired">Expired</option>
             </select>
           </div>

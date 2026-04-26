@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #6b7280;
+  color: #4b5563;
   gap: 12px;
 }
 
@@ -67,7 +67,7 @@
 }
 
 .fc-header-left h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-.fc-header-left p { font-size: 0.88rem; color: #6b7280; margin: 0; }
+.fc-header-left p { font-size: 0.88rem; color: #4b5563; margin: 0; }
 
 .fc-header-right { display: flex; align-items: center; gap: 10px; }
 
@@ -90,7 +90,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   background: #f3f4f6;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-source-badge.source-ml { background: #ecfdf5; color: #059669; }
@@ -129,7 +129,7 @@
 .fc-summary-icon.purple { background: #ede9fe; color: #7c3aed; }
 
 .fc-summary-value { font-size: 1.5rem; font-weight: 700; color: #111827; }
-.fc-summary-label { font-size: 0.78rem; color: #6b7280; margin-top: 2px; }
+.fc-summary-label { font-size: 0.78rem; color: #4b5563; margin-top: 2px; }
 
 /* Demand Card */
 .fc-demand-card { position: relative; }
@@ -197,7 +197,7 @@
   align-items: center;
   gap: 4px;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-heat-dot {
@@ -251,7 +251,7 @@
 
 .fc-heatmap-hour { font-size: 0.65rem; font-weight: 600; color: #374151; }
 .fc-heatmap-prob { font-size: 0.72rem; font-weight: 700; color: #111827; }
-.fc-heatmap-qty { font-size: 0.6rem; color: #6b7280; }
+.fc-heatmap-qty { font-size: 0.6rem; color: #4b5563; }
 .fc-heatmap-meta {
   font-size: 0.58rem;
   color: #475569;
@@ -304,7 +304,7 @@
   padding-top: 12px;
   border-top: 1px solid #f3f4f6;
   font-size: 0.82rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-hot-times svg { color: #f59e0b; }
@@ -337,7 +337,7 @@
 .fc-hour-detail-header p {
   margin: 3px 0 0;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-open-map-btn {
@@ -379,7 +379,7 @@
   background: white;
   border: 1px dashed #d1d5db;
   font-size: 0.76rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-hour-list {
@@ -423,7 +423,7 @@
 }
 
 .fc-hour-item small {
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.72rem;
   line-height: 1.35;
 }
@@ -497,7 +497,7 @@
 .fc-hour-modal-header p {
   margin: 4px 0 0;
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-hour-modal-close {
@@ -557,7 +557,7 @@
   display: block;
   margin-top: 2px;
   font-size: 0.74rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-hour-modal-status {
@@ -664,14 +664,14 @@
 
 .fc-weekly-stats { display: flex; gap: 10px; flex-shrink: 0; }
 .fc-weekly-prob { font-size: 0.82rem; font-weight: 700; color: #111827; }
-.fc-weekly-qty { font-size: 0.78rem; color: #6b7280; }
+.fc-weekly-qty { font-size: 0.78rem; color: #4b5563; }
 
 .fc-weekly-summary {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid #f3f4f6;
   font-size: 0.85rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .fc-weekly-summary strong { color: #111827; }
@@ -716,7 +716,7 @@
 
 .fc-trend-rising { background: #d1fae5; color: #059669; }
 .fc-trend-declining { background: #fef2f2; color: #dc2626; }
-.fc-trend-stable { background: #f3f4f6; color: #6b7280; }
+.fc-trend-stable { background: #f3f4f6; color: #4b5563; }
 
 .fc-category-bar-track {
   height: 6px;
@@ -736,7 +736,7 @@
   display: flex;
   gap: 16px;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #4b5563;
 }
 
 /* Peak */
@@ -781,7 +781,7 @@
 
 .fc-peak-label {
   font-size: 0.65rem;
-  color: #6b7280;
+  color: #4b5563;
   margin-top: 6px;
   font-weight: 500;
 }
@@ -797,7 +797,7 @@
 
 .fc-area-count {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
   background: #f3f4f6;
   padding: 4px 10px;
   border-radius: 12px;
@@ -846,7 +846,7 @@
 
 .fc-area-stat { text-align: center; }
 .fc-area-stat-value { font-size: 1rem; font-weight: 700; color: #111827; display: block; }
-.fc-area-stat-label { font-size: 0.7rem; color: #9ca3af; }
+.fc-area-stat-label { font-size: 0.7rem; color: #4b5563; }
 
 .fc-area-timing { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -858,7 +858,7 @@
   border-radius: 8px;
   background: #f3f4f6;
   font-size: 0.72rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* Insights */

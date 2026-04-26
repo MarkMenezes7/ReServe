@@ -22,7 +22,7 @@
 
 .ip-header p {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -54,7 +54,7 @@
 
 .ip-hero-sub {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -94,7 +94,7 @@
 
 .ip-stat-label {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
   font-weight: 500;
   margin: 0;
 }
@@ -145,7 +145,7 @@
 
 .ip-equiv-label {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #4b5563;
   font-weight: 500;
   margin: 0;
 }
@@ -209,7 +209,7 @@
 
 .ip-compare-values {
   font-size: 0.72rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 2px 0 0;
 }
 
@@ -255,7 +255,7 @@
   align-items: center;
   justify-content: center;
   background: #f3f4f6;
-  color: #9ca3af;
+  color: #4b5563;
   font-size: 1.1rem;
 }
 
@@ -277,7 +277,7 @@
 
 .ip-milestone-status {
   font-size: 0.76rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -332,7 +332,7 @@
 
 .ip-insight-desc {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
   line-height: 1.5;
 }
@@ -368,7 +368,7 @@
   justify-content: center;
   min-height: 50vh;
   font-size: 1rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* ===== Responsive ===== */

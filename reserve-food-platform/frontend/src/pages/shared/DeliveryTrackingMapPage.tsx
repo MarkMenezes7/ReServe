@@ -38,6 +38,34 @@ interface DeliveryLocationUpdatePayload {
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
 const RESERVE_CENTER = { lat: 19.1197, lng: 72.8468 }; // Andheri base
+const LAST_KNOWN_LOCATION_KEY = 'reserve:last-known-location';
+
+function getStoredLocation(): { lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem(LAST_KNOWN_LOCATION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { lat?: unknown; lng?: unknown; timestamp?: unknown };
+    const lat = Number(parsed?.lat);
+    const lng = Number(parsed?.lng);
+    const timestamp = Number(parsed?.timestamp);
+    const withinSevenDays = Number.isFinite(timestamp) && (Date.now() - timestamp) <= (7 * 24 * 60 * 60 * 1000);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !withinSevenDays) return null;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+}
+
+function setStoredLocation(lat: number, lng: number): void {
+  try {
+    localStorage.setItem(
+      LAST_KNOWN_LOCATION_KEY,
+      JSON.stringify({ lat, lng, timestamp: Date.now() })
+    );
+  } catch {
+    // Ignore storage failures and continue with in-memory location.
+  }
+}
 
 function toNum(value: unknown): number | undefined {
   if (value === null || value === undefined || value === '') {
@@ -111,6 +139,41 @@ const DeliveryTrackingMapPage = () => {
   const [dispatchingClaimId, setDispatchingClaimId] = useState<number | null>(null);
   const [routeDistanceKm, setRouteDistanceKm] = useState<number>(0);
   const [routeDurationMin, setRouteDurationMin] = useState<number>(0);
+  const [viewerLocation, setViewerLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const stored = getStoredLocation();
+    if (stored) {
+      setViewerLocation(stored);
+    }
+
+    if (!navigator.geolocation) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (cancelled) return;
+        const loc = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setViewerLocation(loc);
+        setStoredLocation(loc.lat, loc.lng);
+      },
+      () => {
+        // Keep stored location fallback if permission is denied.
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!userType || !userId) return;
@@ -192,12 +255,36 @@ const DeliveryTrackingMapPage = () => {
 
   const renderMarkers = useCallback(() => {
     const map = mapRef.current;
-    if (!map || !selectedDelivery) return;
+    if (!map) return;
 
     markerRefs.current.forEach((marker) => marker.remove());
     markerRefs.current = [];
 
-    const points: Array<{ lng: number; lat: number; label: string; color: string; markerType?: 'driver' }> = [];
+    const points: Array<{ lng: number; lat: number; label: string; color: string; markerType?: 'driver' | 'viewer' }> = [];
+
+    if ((userType === 'donor' || userType === 'ngo') && hasCoords(viewerLocation?.lat, viewerLocation?.lng)) {
+      points.push({
+        lng: viewerLocation.lng,
+        lat: viewerLocation.lat,
+        label: 'You are here',
+        color: '#0ea5e9',
+        markerType: 'viewer',
+      });
+    }
+
+    if (!selectedDelivery) {
+      if (points.length === 1) {
+        map.flyTo({ center: [points[0].lng, points[0].lat], zoom: 12, essential: true });
+      }
+      points.forEach((point) => {
+        const marker = new mapboxgl.Marker({ color: point.color })
+          .setLngLat([point.lng, point.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 16 }).setText(point.label))
+          .addTo(map);
+        markerRefs.current.push(marker);
+      });
+      return;
+    }
 
     if (hasCoords(selectedDelivery.pickupLat, selectedDelivery.pickupLng)) {
       points.push({
@@ -257,7 +344,7 @@ const DeliveryTrackingMapPage = () => {
       points.forEach((point) => bounds.extend([point.lng, point.lat]));
       map.fitBounds(bounds, { padding: 70, maxZoom: 14 });
     }
-  }, [selectedDelivery]);
+  }, [selectedDelivery, userType, viewerLocation]);
 
   const drawRoute = useCallback(async () => {
     const map = mapRef.current;

@@ -196,8 +196,7 @@
   font-weight: 600;
 }
 
-.ngo-payment-field input[type='text'],
-.ngo-payment-field input[type='file'] {
+.ngo-payment-field input[type='text'] {
   width: 100%;
 }
 
@@ -206,6 +205,50 @@
   border-radius: 10px;
   height: 40px;
   padding: 0 10px;
+}
+
+.ngo-payment-upload-box {
+  width: 100%;
+  border: 1px dashed #fb923c;
+  border-radius: 10px;
+  background: #fffaf5;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.ngo-payment-upload-action {
+  background: #ea580c;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ngo-payment-upload-filename {
+  color: #9a3412;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ngo-payment-file-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.ngo-payment-upload-hint {
+  margin: 6px 0 0;
+  color: #9a3412;
+  font-size: 0.82rem;
 }
 
 .ngo-payment-preview-wrap {

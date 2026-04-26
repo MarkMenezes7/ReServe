@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* ===== CSS Variables ===== */
 :root {
@@ -14,13 +14,14 @@
   --emerald-400: #34d399;
   --emerald-500: #10b981;
   --emerald-600: #059669;
+  --emerald-700: #047857;
 
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
   --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
+  --gray-400: #4b5563;
+  --gray-500: #4b5563;
   --gray-600: #4b5563;
   --gray-700: #374151;
   --gray-800: #1f2937;
@@ -49,26 +50,26 @@
   --radius-xl: 20px;
   --radius-full: 999px;
 
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 
   --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ===== Page Shell ===== */
 .add-listing-page {
-  min-height: 100vh;
-  background: var(--green-50);
   font-family: var(--font-body);
-  padding: 0 0 4rem;
+  padding: 0 0 3rem;
 }
 
 /* ===== Hero Header ===== */
 .page-hero {
   background: linear-gradient(135deg, var(--gray-900) 0%, var(--green-800) 60%, var(--emerald-600) 100%);
-  padding: 2rem 2rem 3.5rem;
+  padding: 1.75rem 2rem 3rem;
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-xl);
+  margin: 0 0 0;
 }
 
 .page-hero::before {
@@ -81,8 +82,7 @@
 }
 
 .page-hero-inner {
-  max-width: 780px;
-  margin: 0 auto;
+  max-width: 100%;
   position: relative;
   z-index: 1;
 }
@@ -129,11 +129,12 @@
 
 .page-title {
   font-family: var(--font-display);
-  font-size: 2.4rem;
+  font-size: 1.8rem;
+  font-weight: 800;
   color: white;
   margin: 0 0 0.4rem;
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
@@ -145,9 +146,9 @@
 
 /* ===== Progress Steps ===== */
 .progress-wrapper {
-  max-width: 780px;
-  margin: -1.5rem auto 0;
-  padding: 0 2rem;
+  max-width: 100%;
+  margin: -1.5rem 0 0;
+  padding: 0;
   position: relative;
   z-index: 10;
 }
@@ -234,9 +235,9 @@
 
 /* ===== Form Container ===== */
 .form-body {
-  max-width: 780px;
-  margin: 2rem auto 0;
-  padding: 0 2rem;
+  max-width: 100%;
+  margin: 1.5rem 0 0;
+  padding: 0;
 }
 
 .form-card {
@@ -738,14 +739,14 @@
 .remove-image:hover { background: var(--red-600); }
 
 /* ===== Review Summary ===== */
-.review-card {
+.summary-card {
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.review-card-header {
+.summary-card-header {
   padding: 1rem 1.25rem;
   background: linear-gradient(135deg, var(--green-800), var(--emerald-600));
   color: white;
@@ -753,34 +754,33 @@
   font-size: 1.1rem;
 }
 
-.review-grid {
+.summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
 }
 
-.review-item {
+.summary-item {
   padding: 0.85rem 1.25rem;
   border-bottom: 1px solid var(--gray-200);
   border-right: 1px solid var(--gray-200);
 }
 
-.review-item:nth-child(even) { border-right: none; }
-.review-item:last-child, .review-item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+.summary-item:nth-child(even) { border-right: none; }
+.summary-item:last-child, .summary-item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
 
-.review-label {
-  font-size: 0.7rem;
-  font-weight: 600;
+.summary-label {
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: var(--gray-400);
-  margin-bottom: 3px;
+  margin-bottom: 0.2rem;
 }
 
-.review-value {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--gray-800);
+.summary-value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--gray-900);
 }
 
 /* ===== Spoilage Prediction ===== */

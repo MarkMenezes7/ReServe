@@ -109,11 +109,21 @@ export const ngoApi = {
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: data,
       }).then(async (res) => {
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Request failed');
+        const raw = await res.text();
+        let parsed: Record<string, unknown> = {};
+        try {
+          parsed = raw ? JSON.parse(raw) : {};
+        } catch {
+          parsed = {};
         }
-        return res.json() as Promise<{ message: string; claim: import('../types').Claim }>;
+
+        if (!res.ok) {
+          const fallbackText = raw && !raw.trim().startsWith('<') ? raw.trim() : '';
+          const message = (parsed.error as string) || (parsed.message as string) || fallbackText || `Request failed (${res.status})`;
+          throw new Error(message);
+        }
+
+        return (parsed as { message: string; claim: import('../types').Claim });
       });
     }
 

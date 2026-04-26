@@ -1,8 +1,8 @@
 const { dbAll, dbRun } = require('../db/database');
 const { createNotification } = require('../utils/notifications');
 
-const SIMULATION_INTERVAL_MS = 5000;
-const PROGRESS_STEP = 0.06;
+const SIMULATION_INTERVAL_MS = 6000;
+const PROGRESS_STEP = 0.025;
 const RESERVE_CENTER = { lat: 19.1197, lng: 72.8468 }; // Andheri, Mumbai
 
 let intervalHandle = null;

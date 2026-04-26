@@ -173,7 +173,7 @@ export default function DonorAnalyticsPage() {
           <div className="da-hero-right">
             <div className="da-hero-pill">
               <div>
-                <div className="da-hero-pill-val">{analytics.collectionRate.toFixed(0)}%</div>
+                <div className="da-hero-pill-val">{(analytics.collectionRate || 0).toFixed(0)}%</div>
                 <div className="da-hero-pill-lbl">Collection Rate</div>
               </div>
             </div>
@@ -200,7 +200,7 @@ export default function DonorAnalyticsPage() {
               {s.isRing ? (
                 <div className="da-stat-ring">
                   <RingProgress percent={analytics.collectionRate} size={64} stroke={5} color="#22c55e" />
-                  <div className="da-stat-ring-pct">{analytics.collectionRate.toFixed(0)}%</div>
+                  <div className="da-stat-ring-pct">{(analytics.collectionRate || 0).toFixed(0)}%</div>
                 </div>
               ) : (
                 <>
@@ -248,7 +248,7 @@ export default function DonorAnalyticsPage() {
               <div className="da-highlight-card">
                 <div className="da-highlight-icon emerald"><CheckCircle size={18} /></div>
                 <div className="da-highlight-info">
-                  <span className="da-highlight-value">{analytics.collectionRate.toFixed(0)}%</span>
+                  <span className="da-highlight-value">{(analytics.collectionRate || 0).toFixed(0)}%</span>
                   <span className="da-highlight-desc">Of donations were collected</span>
                 </div>
               </div>

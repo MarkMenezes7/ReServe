@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #6b7280;
+  color: #4b5563;
   gap: 12px;
 }
 
@@ -59,7 +59,7 @@
 
 .review-subtitle {
   font-size: 0.92rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -100,7 +100,7 @@
 
 .claim-info-label {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .claim-info-value {
@@ -109,7 +109,7 @@
   color: #111827;
 }
 
-.org-tag { font-weight: 400; color: #6b7280; }
+.org-tag { font-weight: 400; color: #4b5563; }
 
 /* Error Card */
 .review-error-card {
@@ -121,7 +121,7 @@
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  color: #6b7280;
+  color: #4b5563;
   gap: 10px;
 }
 
@@ -225,13 +225,13 @@
   background: white;
 }
 
-.comment-textarea::placeholder { color: #9ca3af; }
+.comment-textarea::placeholder { color: #4b5563; }
 
 .char-count {
   display: block;
   text-align: right;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #4b5563;
   margin-top: 4px;
 }
 
@@ -245,7 +245,7 @@
   line-height: 1.6;
 }
 
-.no-comment { color: #9ca3af; font-style: italic; }
+.no-comment { color: #4b5563; font-style: italic; }
 
 /* Anonymous Section */
 .anonymous-section { margin-bottom: 24px; }
@@ -255,7 +255,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: #6b7280;
+  color: #4b5563;
   cursor: pointer;
 }
 
@@ -273,7 +273,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   background: #f3f4f6;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.82rem;
 }
 

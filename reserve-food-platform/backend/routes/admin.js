@@ -208,7 +208,8 @@ router.get('/listings', async (req, res) => {
     params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
 
     const listings = await dbAll(query, params);
-    res.json(listings);
+    const totalResult = await dbGet('SELECT COUNT(*) as count FROM listings');
+    res.json({ listings, total: totalResult.count });
   } catch (error) {
     console.error('Admin listings error:', error);
     res.status(500).json({ error: 'Failed to fetch listings' });
@@ -263,7 +264,8 @@ router.get('/claims', async (req, res) => {
     params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
 
     const claims = await dbAll(query, params);
-    res.json(claims);
+    const totalResult = await dbGet('SELECT COUNT(*) as count FROM claims');
+    res.json({ claims, total: totalResult.count });
   } catch (error) {
     console.error('Admin claims error:', error);
     res.status(500).json({ error: 'Failed to fetch claims' });
@@ -304,7 +306,7 @@ router.get('/reviews', async (req, res) => {
       JOIN listings l ON c.listingId = l.id
       ORDER BY r.createdAt DESC LIMIT 100
     `);
-    res.json(reviews);
+    res.json({ reviews, total: reviews.length });
   } catch (error) {
     console.error('Admin reviews error:', error);
     res.status(500).json({ error: 'Failed to fetch reviews' });
@@ -326,7 +328,8 @@ router.delete('/reviews/:id', async (req, res) => {
 router.get('/contact-messages', async (req, res) => {
   try {
     const messages = await dbAll('SELECT * FROM contact_messages ORDER BY createdAt DESC');
-    res.json(messages);
+    const totalResult = await dbGet('SELECT COUNT(*) as count FROM contact_messages');
+    res.json({ messages, total: totalResult.count });
   } catch (error) {
     console.error('Contact messages error:', error);
     res.status(500).json({ error: 'Failed to fetch messages' });

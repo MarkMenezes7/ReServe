@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { donorApi } from '../../services/api';
 import { useToast } from '../../components/ToastProvider';
+import DonorLayout from '../../components/DonorLayout';
 import type { Listing } from '../../types';
 import './EditListingPage.css';
 
@@ -194,41 +195,42 @@ const EditListingPage = () => {
 
   if (loading) {
     return (
-      <div className="edit-listing-page">
-        <div className="edit-loading-state">
-          <Loader className="edit-spinner" size={40} />
-          <p>Loading listing data...</p>
+      <DonorLayout>
+        <div className="edit-listing-page">
+          <div className="edit-loading-state">
+            <Loader className="edit-spinner" size={40} />
+            <p>Loading listing data...</p>
+          </div>
         </div>
-      </div>
+      </DonorLayout>
     );
   }
 
   if (notFound) {
     return (
-      <div className="edit-listing-page">
-        <div className="edit-not-found">
-          <h2>Listing Not Found</h2>
-          <p>The listing you are looking for does not exist or you do not have permission to edit it.</p>
-          <button className="edit-btn-back-dashboard" onClick={() => navigate('/donor/dashboard')}>
-            <ArrowLeft size={18} />
-            Back to Dashboard
-          </button>
+      <DonorLayout>
+        <div className="edit-listing-page">
+          <div className="edit-not-found">
+            <h2>Listing Not Found</h2>
+            <p>The listing you are looking for does not exist or you do not have permission to edit it.</p>
+            <button className="edit-btn-back-dashboard" onClick={() => navigate('/donor/dashboard')}>
+              <ArrowLeft size={18} />
+              Back to Dashboard
+            </button>
+          </div>
         </div>
-      </div>
+      </DonorLayout>
     );
   }
 
   return (
-    <div className="edit-listing-page">
-      {/* Header */}
-      <div className="edit-page-header">
-        <button className="edit-back-button" onClick={() => navigate('/donor/dashboard')}>
-          <ArrowLeft size={20} />
-          <span>Back to Dashboard</span>
-        </button>
-        <h1 className="edit-page-title">Edit Listing</h1>
-        <p className="edit-page-subtitle">Update the details of your food donation</p>
-      </div>
+    <DonorLayout>
+      <div className="edit-listing-page">
+        {/* Header */}
+        <div className="edit-page-header">
+          <h1 className="edit-page-title">Edit Listing</h1>
+          <p className="edit-page-subtitle">Update the details of your food donation</p>
+        </div>
 
       <motion.div
         className="edit-form-container"
@@ -549,6 +551,7 @@ const EditListingPage = () => {
         </form>
       </motion.div>
     </div>
+  </DonorLayout>
   );
 };
 

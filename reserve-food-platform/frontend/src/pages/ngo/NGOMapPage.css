@@ -35,7 +35,7 @@
 .map-back:hover { background: #f0fdf4; border-color: #a7f3d0; color: #059669; }
 
 .map-header h1 { font-size: 1.3rem; font-weight: 700; color: #111827; margin: 0 0 2px; }
-.map-header p { font-size: 0.85rem; color: #6b7280; margin: 0; }
+.map-header p { font-size: 0.85rem; color: #4b5563; margin: 0; }
 
 /* Toolbar */
 .map-toolbar {
@@ -56,7 +56,7 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   background: white;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -72,7 +72,7 @@
 
 .toolbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.toolbar-loading { font-size: 0.82rem; color: #6b7280; align-self: center; }
+.toolbar-loading { font-size: 0.82rem; color: #4b5563; align-self: center; }
 
 /* Temporal Slider */
 .temporal-slider {
@@ -111,7 +111,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #4b5563;
   min-width: 280px;
 }
 
@@ -172,7 +172,7 @@
 .map-empty {
   padding: 32px 16px;
   text-align: center;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.88rem;
 }
 
@@ -208,8 +208,14 @@
 .map-card-title svg { color: #059669; flex-shrink: 0; }
 
 .map-card p { font-size: 0.82rem; color: #374151; margin: 0 0 2px; }
-.map-card small { font-size: 0.75rem; color: #9ca3af; }
+.map-card small { font-size: 0.75rem; color: #4b5563; }
 .map-card-org { display: block; margin-top: 2px; }
+.map-card-distance {
+  display: block;
+  margin-top: 3px;
+  color: #2563eb;
+  font-weight: 600;
+}
 
 .map-card-actions {
   margin-top: 10px;
@@ -310,7 +316,7 @@
   width: 100%;
   height: 100%;
   min-height: 420px;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.92rem;
   background: #f9fafb;
 }
@@ -385,7 +391,7 @@
 .map-popup-header p {
   margin: 4px 0 0;
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .map-popup-close {
@@ -433,7 +439,7 @@
   border-radius: 10px;
   border: 1px dashed #d1d5db;
   background: #f9fafb;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.78rem;
 }
 

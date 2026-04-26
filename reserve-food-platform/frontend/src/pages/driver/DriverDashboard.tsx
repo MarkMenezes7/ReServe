@@ -300,7 +300,7 @@ const DriverDashboard = () => {
     from: 0,
     to: 0,
     startedAt: 0,
-    durationMs: 5000,
+    durationMs: 6000,
   });
   const routeGeometryRef = useRef<{
     deliveryId: number | null;
@@ -356,7 +356,7 @@ const DriverDashboard = () => {
         from: safe,
         to: safe,
         startedAt: now,
-        durationMs: 5000,
+        durationMs: 6000,
       };
       return safe;
     }
@@ -367,7 +367,7 @@ const DriverDashboard = () => {
         from: safe,
         to: safe,
         startedAt: now,
-        durationMs: 5000,
+        durationMs: 6000,
       };
       return safe;
     }
@@ -384,7 +384,7 @@ const DriverDashboard = () => {
 
     if (safe > motion.to + 0.0005) {
       const delta = Math.max(0, safe - current);
-      const estimatedMs = delta > 0 ? (delta / 0.06) * 5000 : 5000;
+      const estimatedMs = delta > 0 ? (delta / 0.025) * 6000 : 6000;
       progressMotionRef.current = {
         deliveryId,
         from: current,
@@ -1165,7 +1165,7 @@ const DriverDashboard = () => {
 
         <header className="driver-header">
           <h1>Delivery Navigation</h1>
-          <p>Traffic-aware route and live position updates every 5 seconds.</p>
+          <p>Traffic-aware route and live position updates every 6 seconds.</p>
         </header>
 
         {error && <div className="driver-error">{error}</div>}
