@@ -8,7 +8,8 @@ import NGOLayout from '../../components/NGOLayout';
 import { Claim, Listing } from '../../types';
 import { ngoApi, mlApi } from '../../services/api';
 import { useToast } from '../../components/ToastProvider';
-import { emitNgoSync, subscribeNgoSync } from '../../utils/ngoSync';
+import { subscribeNgoSync } from '../../utils/ngoSync';
+import NgoDeliveryClaimModal from '../../components/common/NgoDeliveryClaimModal';
 import './NGOMapPage.css';
 
 const DEFAULT_CENTER: [number, number] = [28.6139, 77.209];
@@ -28,7 +29,7 @@ const NGOMapPage = () => {
   const [selectedHeatAnchor, setSelectedHeatAnchor] = useState<{ lat: number; lng: number; label: string } | null>(null);
   const [popupAnchorLatLng, setPopupAnchorLatLng] = useState<{ lat: number; lng: number } | null>(null);
   const [dismissedListingIds, setDismissedListingIds] = useState<number[]>([]);
-  const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [claimModalListing, setClaimModalListing] = useState<Listing | null>(null);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const userId = Number(localStorage.getItem('userId') || '0');
@@ -215,7 +216,7 @@ const NGOMapPage = () => {
     showToast('Removed from popup view', 'success');
   }, [selectedListingId, showToast]);
 
-  const handleClaim = useCallback(async (listing: Listing) => {
+  const handleClaim = useCallback((listing: Listing) => {
     if (!userId) {
       showToast('Please login again to claim food', 'error');
       return;
@@ -226,25 +227,8 @@ const NGOMapPage = () => {
       return;
     }
 
-    try {
-      setClaimingId(listing.id);
-      await ngoApi.claimListing({
-        listingId: listing.id,
-        ngoId: userId,
-        scheduledTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-        deliveryMethod: 'self-pickup',
-      });
-
-      showToast(`Claimed ${listing.foodName} successfully`, 'success');
-      await fetchData();
-      emitNgoSync('claim-created');
-      closePopup();
-    } catch (error) {
-      showToast((error as Error).message || 'Failed to claim listing', 'error');
-    } finally {
-      setClaimingId(null);
-    }
-  }, [claimedListingIds, closePopup, fetchData, showToast, userId]);
+    setClaimModalListing(listing);
+  }, [claimedListingIds, showToast, userId]);
 
   useEffect(() => {
     const unsubscribe = subscribeNgoSync(() => {
@@ -537,7 +521,6 @@ const NGOMapPage = () => {
             <div className="map-list">
               {activeListings.map(listing => {
                 const alreadyClaimed = claimedListingIds.has(listing.id);
-                const isClaimingThis = claimingId === listing.id;
 
                 return (
                   <div key={listing.id} className={`map-card ${alreadyClaimed ? 'claimed' : ''}`} onClick={() => { focusListing(listing); openListingPopup(listing); }}>
@@ -553,13 +536,13 @@ const NGOMapPage = () => {
                       <button
                         type="button"
                         className="map-claim-btn"
-                        disabled={alreadyClaimed || isClaimingThis}
+                        disabled={alreadyClaimed}
                         onClick={(event) => {
                           event.stopPropagation();
-                          void handleClaim(listing);
+                          handleClaim(listing);
                         }}
                       >
-                        {alreadyClaimed ? 'Already Claimed' : isClaimingThis ? 'Claiming...' : 'Claim Food'}
+                        {alreadyClaimed ? 'Already Claimed' : 'Claim Food'}
                       </button>
                     </div>
                   </div>
@@ -615,7 +598,6 @@ const NGOMapPage = () => {
                       <div className="map-popup-empty">No active restaurants in this selection.</div>
                     ) : selectedPopupActiveListings.map((listing) => {
                       const alreadyClaimed = claimedListingIds.has(listing.id);
-                      const isClaimingThis = claimingId === listing.id;
 
                       return (
                         <div className="map-popup-card" key={`active-${listing.id}`}>
@@ -629,10 +611,10 @@ const NGOMapPage = () => {
                             <button
                               type="button"
                               className="map-popup-accept"
-                              disabled={alreadyClaimed || isClaimingThis}
-                              onClick={() => void handleClaim(listing)}
+                              disabled={alreadyClaimed}
+                              onClick={() => handleClaim(listing)}
                             >
-                              {alreadyClaimed ? 'Already Claimed' : isClaimingThis ? 'Claiming...' : 'Accept'}
+                              {alreadyClaimed ? 'Already Claimed' : 'Accept'}
                             </button>
                             <button
                               type="button"
@@ -680,6 +662,15 @@ const NGOMapPage = () => {
           )}
         </section>
       </div>
+
+      <NgoDeliveryClaimModal
+        listing={claimModalListing}
+        onClose={() => setClaimModalListing(null)}
+        onClaimed={() => {
+          void fetchData();
+          closePopup();
+        }}
+      />
       </div>
     </NGOLayout>
   );

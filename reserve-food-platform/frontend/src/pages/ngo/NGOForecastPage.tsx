@@ -9,6 +9,7 @@ import NGOLayout from '../../components/NGOLayout';
 import { useToast } from '../../components/ToastProvider';
 import { mlApi, ngoApi } from '../../services/api';
 import { subscribeNgoSync } from '../../utils/ngoSync';
+import NgoDeliveryClaimModal from '../../components/common/NgoDeliveryClaimModal';
 import type {
   AIInsight,
   AreaForecast,
@@ -60,7 +61,7 @@ export default function NGOForecastPage() {
   const [selectedHour, setSelectedHour] = useState<number | null>(new Date().getHours());
   const [isHourPopupOpen, setIsHourPopupOpen] = useState(false);
   const [rejectedListingIds, setRejectedListingIds] = useState<number[]>([]);
-  const [claimingListingId, setClaimingListingId] = useState<number | null>(null);
+  const [claimModalListing, setClaimModalListing] = useState<Listing | null>(null);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const userId = parseInt(localStorage.getItem('userId') || '0');
@@ -196,7 +197,7 @@ export default function NGOForecastPage() {
     showToast('Removed from this hour popup', 'success');
   }
 
-  async function handleQuickClaim(listing: Listing) {
+  function handleQuickClaim(listing: Listing) {
     if (!userId) {
       showToast('Please login again to claim food', 'error');
       return;
@@ -206,28 +207,7 @@ export default function NGOForecastPage() {
       showToast('You already have a live claim for this listing', 'error');
       return;
     }
-
-    try {
-      setClaimingListingId(listing.id);
-      await ngoApi.claimListing({
-        listingId: listing.id,
-        ngoId: userId,
-        scheduledTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-        deliveryMethod: 'self-pickup',
-      });
-      showToast(`Claimed ${listing.foodName} successfully`, 'success');
-      await loadData();
-      setIsHourPopupOpen(false);
-
-      const listingHour = getHourFromDateTime(listing.availableFrom || listing.createdAt || listing.bestBefore);
-      if (listingHour !== null) {
-        setSelectedHour(listingHour);
-      }
-    } catch {
-      showToast('Failed to claim listing', 'error');
-    } finally {
-      setClaimingListingId(null);
-    }
+    setClaimModalListing(listing);
   }
 
   if (loading) {
@@ -404,7 +384,6 @@ export default function NGOForecastPage() {
                       <div className="fc-hour-list">
                         {selectedHourActiveListings.map((listing) => {
                           const alreadyClaimed = liveClaimListingIds.has(listing.id);
-                          const isClaiming = claimingListingId === listing.id;
                           return (
                             <div className="fc-hour-item" key={`listing-${listing.id}`}>
                               <div className="fc-hour-item-top">
@@ -415,10 +394,10 @@ export default function NGOForecastPage() {
                               <button
                                 type="button"
                                 className="fc-hour-claim-btn"
-                                disabled={alreadyClaimed || isClaiming}
-                                onClick={() => void handleQuickClaim(listing)}
+                                disabled={alreadyClaimed}
+                                onClick={() => handleQuickClaim(listing)}
                               >
-                                {alreadyClaimed ? 'Already Claimed' : isClaiming ? 'Claiming...' : 'Claim Food'}
+                                {alreadyClaimed ? 'Already Claimed' : 'Claim Food'}
                               </button>
                             </div>
                           );
@@ -481,7 +460,6 @@ export default function NGOForecastPage() {
                     ) : (
                       selectedHourActiveListings.map((listing) => {
                         const alreadyClaimed = liveClaimListingIds.has(listing.id);
-                        const isClaiming = claimingListingId === listing.id;
                         const isRejected = rejectedListingIdSet.has(listing.id);
 
                         return (
@@ -498,10 +476,10 @@ export default function NGOForecastPage() {
                               <button
                                 type="button"
                                 className="fc-hour-modal-claim"
-                                disabled={alreadyClaimed || isClaiming || isRejected}
-                                onClick={() => void handleQuickClaim(listing)}
+                                disabled={alreadyClaimed || isRejected}
+                                onClick={() => handleQuickClaim(listing)}
                               >
-                                {alreadyClaimed ? 'Already Claimed' : isClaiming ? 'Claiming...' : 'Claim'}
+                                {alreadyClaimed ? 'Already Claimed' : 'Claim'}
                               </button>
                               <button
                                 type="button"
@@ -721,6 +699,22 @@ export default function NGOForecastPage() {
             </div>
           </motion.div>
         )}
+
+        <NgoDeliveryClaimModal
+          listing={claimModalListing}
+          onClose={() => setClaimModalListing(null)}
+          onClaimed={() => {
+            void loadData();
+            setIsHourPopupOpen(false);
+
+            const listingHour = getHourFromDateTime(
+              claimModalListing?.availableFrom || claimModalListing?.createdAt || claimModalListing?.bestBefore
+            );
+            if (listingHour !== null) {
+              setSelectedHour(listingHour);
+            }
+          }}
+        />
       </div>
     </NGOLayout>
   );

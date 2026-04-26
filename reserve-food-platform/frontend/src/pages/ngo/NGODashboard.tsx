@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, ChangeEvent, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Package,
@@ -21,69 +21,14 @@ import { claimsApi, ngoApi } from '../../services/api';
 import { emitNgoSync, subscribeNgoSync } from '../../utils/ngoSync';
 import './NGODashboard.css';
 import VerificationBanner from '../../components/common/VerificationBanner';
-
-const WEBSITE_UPI_ID = 'reserve@upi';
+import NgoDeliveryClaimModal from '../../components/common/NgoDeliveryClaimModal';
+import type { Claim, Listing } from '../../types';
 
 interface Stats {
   totalCollections: number;
   activeClaims: number;
   foodCollected: number;
   peopleFed: number;
-}
-
-interface Listing {
-  id: number;
-  foodName: string;
-  category: string;
-  foodType?: string;
-  quantity: number;
-  unit: string;
-  description?: string;
-  bestBefore: string;
-  pickupLocation: string;
-  donorName?: string;
-  organizationName?: string;
-  status: string;
-  latitude?: number;
-  longitude?: number;
-  storageType?: string;
-}
-
-interface Claim {
-  id: number;
-  foodName?: string;
-  quantity?: number;
-  unit?: string;
-  donorName?: string;
-  organizationName?: string;
-  status: string;
-  scheduledTime?: string;
-  pickupLocation?: string;
-  phone?: string;
-  deliveryMethod?: string;
-  deliveryFee?: number;
-  deliveryDistance?: number;
-  deliveryStatus?: string;
-  paymentStatus?: 'not-required' | 'pending-verification' | 'verified' | 'rejected';
-  paymentTransactionId?: string;
-  paymentScreenshotUrl?: string;
-  paymentRejectReason?: string;
-}
-
-interface DeliveryQuoteBreakdown {
-  baseFare: number;
-  baseDistanceKm: number;
-  perKmRate: number;
-  extraDistanceKm: number;
-  distanceFare: number;
-  totalFare: number;
-}
-
-interface DeliveryQuote {
-  deliveryDistance: number;
-  deliveryFee: number;
-  pricingModel: string;
-  breakdown: DeliveryQuoteBreakdown;
 }
 
 const MUMBAI_DEMO_TAG_REGEX = /\s*\[MUMBAI_DEMO_FRESH_[^\]]+\]\s*/gi;
@@ -114,17 +59,6 @@ const NGODashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [claimModal, setClaimModal] = useState<Listing | null>(null);
-  const [deliveryMethod, setDeliveryMethod] = useState<'self-pickup' | 'platform-delivery'>('self-pickup');
-  const [ngoLocation, setNgoLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [estimatedFee, setEstimatedFee] = useState(0);
-  const [estimatedDistanceKm, setEstimatedDistanceKm] = useState<number | null>(null);
-  const [fareBreakdown, setFareBreakdown] = useState<DeliveryQuoteBreakdown | null>(null);
-  const [quoteLoading, setQuoteLoading] = useState(false);
-  const [quoteError, setQuoteError] = useState('');
-  const [paymentTransactionId, setPaymentTransactionId] = useState('');
-  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
-  const [paymentScreenshotPreview, setPaymentScreenshotPreview] = useState('');
-  const [claimLoading, setClaimLoading] = useState(false);
   const navigate = useNavigate();
 
   const userId = Number(localStorage.getItem('userId') || '0');
@@ -184,139 +118,8 @@ const NGODashboard = () => {
     return unsubscribe;
   }, [fetchData]);
 
-  const fetchDeliveryQuote = useCallback(async (listing: Listing, coords?: { lat: number; lng: number } | null) => {
-    try {
-      setQuoteLoading(true);
-      setQuoteError('');
-
-      const quote = (await ngoApi.getDeliveryQuote({
-        listingId: listing.id,
-        ngoLatitude: coords?.lat ?? null,
-        ngoLongitude: coords?.lng ?? null,
-      })) as DeliveryQuote;
-
-      setEstimatedFee(Number(quote.deliveryFee) || 0);
-      setEstimatedDistanceKm(Number(quote.deliveryDistance) || null);
-      setFareBreakdown(quote.breakdown || null);
-    } catch (error) {
-      setEstimatedFee(0);
-      setEstimatedDistanceKm(null);
-      setFareBreakdown(null);
-      const message = error instanceof Error ? error.message : 'Unable to calculate delivery fee';
-      setQuoteError(message);
-    } finally {
-      setQuoteLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (claimModal && deliveryMethod === 'platform-delivery' && estimatedFee <= 0 && !quoteLoading) {
-      void fetchDeliveryQuote(claimModal, ngoLocation);
-    }
-  }, [claimModal, deliveryMethod, estimatedFee, fetchDeliveryQuote, ngoLocation, quoteLoading]);
-
-  const handleClaim = async (listingId: number) => {
-    // Called from modal after delivery method is selected
-    if (!userId) {
-      alert('Please login again and retry.');
-      return;
-    }
-
-    try {
-      setClaimLoading(true);
-      const scheduledTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-
-      let data: { message: string; claim: Claim };
-
-      if (deliveryMethod === 'platform-delivery') {
-        if (quoteLoading) {
-          alert('Please wait while delivery fee is being calculated.');
-          setClaimLoading(false);
-          return;
-        }
-        if (!(estimatedFee > 0) || estimatedDistanceKm == null) {
-          alert('Unable to calculate delivery fee. Please allow location and try again.');
-          setClaimLoading(false);
-          return;
-        }
-        if (!paymentTransactionId.trim()) {
-          alert('Please enter transaction ID.');
-          setClaimLoading(false);
-          return;
-        }
-        if (!paymentScreenshot) {
-          alert('Please upload payment screenshot.');
-          setClaimLoading(false);
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('listingId', String(listingId));
-        formData.append('ngoId', String(userId));
-        formData.append('scheduledTime', scheduledTime);
-        formData.append('deliveryMethod', deliveryMethod);
-        formData.append('ngoLatitude', String(ngoLocation?.lat ?? ''));
-        formData.append('ngoLongitude', String(ngoLocation?.lng ?? ''));
-        formData.append('quotedDeliveryFee', String(estimatedFee));
-        formData.append('quotedDeliveryDistance', String(estimatedDistanceKm));
-        formData.append('paymentTransactionId', paymentTransactionId.trim());
-        formData.append('paymentScreenshot', paymentScreenshot);
-
-        data = (await ngoApi.claimListing(formData)) as unknown as { message: string; claim: Claim };
-      } else {
-        data = (await ngoApi.claimListing({
-          listingId,
-          ngoId: userId,
-          scheduledTime,
-          deliveryMethod,
-          ngoLatitude: ngoLocation?.lat || null,
-          ngoLongitude: ngoLocation?.lng || null,
-        })) as unknown as { message: string; claim: Claim };
-      }
-
-      alert(data.message || 'Food claimed successfully!');
-      setClaimModal(null);
-      setPaymentTransactionId('');
-      setPaymentScreenshot(null);
-      setPaymentScreenshotPreview('');
-      await fetchData(false);
-      emitNgoSync('claim-created');
-    } catch (error) {
-      console.error('Error claiming food:', error);
-      const message = error instanceof Error ? error.message : 'Failed to claim food';
-      alert(message);
-    } finally {
-      setClaimLoading(false);
-    }
-  };
-
   const openClaimModal = (listing: Listing) => {
     setClaimModal(listing);
-    setDeliveryMethod('self-pickup');
-    setNgoLocation(null);
-    setEstimatedFee(0);
-    setEstimatedDistanceKm(null);
-    setFareBreakdown(null);
-    setQuoteLoading(false);
-    setQuoteError('');
-    setPaymentTransactionId('');
-    setPaymentScreenshot(null);
-    setPaymentScreenshotPreview('');
-
-    void fetchDeliveryQuote(listing, null);
-
-    // Try to get NGO location for distance calculation
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setNgoLocation(loc);
-          void fetchDeliveryQuote(listing, loc);
-        },
-        () => { /* location denied, no problem */ },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
   };
 
   const handleMarkCollected = async (claimId: number) => {
@@ -364,17 +167,6 @@ const NGODashboard = () => {
   });
 
   const categories = ['all', 'cooked-meals', 'bakery', 'dairy', 'fruits-vegetables', 'packaged-food'];
-
-  const handlePaymentScreenshotChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setPaymentScreenshot(file);
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPaymentScreenshotPreview(url);
-    } else {
-      setPaymentScreenshotPreview('');
-    }
-  };
 
   return (
     <NGOLayout>
@@ -681,185 +473,13 @@ const NGODashboard = () => {
         </div>
       </div>
 
-      {/* Claim Modal with Delivery Options */}
-      <AnimatePresence>
-        {claimModal && (
-          <motion.div
-            className="claim-modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setClaimModal(null)}
-          >
-            <motion.div
-              className="claim-modal"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="claim-modal-header">
-                <h2>Claim: {claimModal.foodName}</h2>
-                <button className="close-btn" onClick={() => setClaimModal(null)}>
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="claim-modal-info">
-                <div className="info-row">
-                  <Package size={16} />
-                  <span>{claimModal.quantity} {claimModal.unit} — {claimModal.category}</span>
-                </div>
-                <div className="info-row">
-                  <MapPin size={16} />
-                  <span>{claimModal.pickupLocation}</span>
-                </div>
-                <div className="info-row">
-                  <Clock size={16} />
-                  <span>Best before: {new Date(claimModal.bestBefore).toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="delivery-options">
-                <h3>How would you like to collect?</h3>
-                
-                <label
-                  className={`delivery-option-card ${deliveryMethod === 'self-pickup' ? 'selected' : ''}`}
-                  onClick={() => setDeliveryMethod('self-pickup')}
-                >
-                  <input
-                    type="radio"
-                    name="delivery"
-                    checked={deliveryMethod === 'self-pickup'}
-                    onChange={() => setDeliveryMethod('self-pickup')}
-                  />
-                  <div className="option-icon self">
-                    <Navigation size={24} />
-                  </div>
-                  <div className="option-content">
-                    <strong>Self Pickup</strong>
-                    <p>Your organization picks up the food directly from the donor</p>
-                    <span className="option-price free">Free</span>
-                  </div>
-                </label>
-
-                <label
-                  className={`delivery-option-card ${deliveryMethod === 'platform-delivery' ? 'selected' : ''}`}
-                  onClick={() => setDeliveryMethod('platform-delivery')}
-                >
-                  <input
-                    type="radio"
-                    name="delivery"
-                    checked={deliveryMethod === 'platform-delivery'}
-                    onChange={() => setDeliveryMethod('platform-delivery')}
-                  />
-                  <div className="option-icon delivery">
-                    <Truck size={24} />
-                  </div>
-                  <div className="option-content">
-                    <strong>Platform Delivery</strong>
-                    <p>We'll deliver the food to your location (fee based on distance)</p>
-                    {quoteLoading ? (
-                      <span className="option-price paid">Calculating fare...</span>
-                    ) : estimatedFee > 0 && estimatedDistanceKm != null ? (
-                      <span className="option-price paid">Pay ₹{estimatedFee} ({estimatedDistanceKm} km)</span>
-                    ) : quoteError ? (
-                      <span className="option-price paid">Unable to calculate fare</span>
-                    ) : (
-                      <span className="option-price paid">Calculating fare...</span>
-                    )}
-                  </div>
-                </label>
-              </div>
-
-              {deliveryMethod === 'platform-delivery' && (
-                <>
-                  <div className="delivery-note">
-                    <Truck size={16} />
-                    <span>Delivery is managed by ReServe admin. You'll receive tracking updates via notifications.</span>
-                  </div>
-
-                  <div className="payment-proof-box">
-                    <h4>Pay Delivery Fee Before Dispatch</h4>
-                    <p className="payment-upi">
-                      Website UPI ID: <strong>{WEBSITE_UPI_ID}</strong>
-                    </p>
-
-                    <div className="payment-amount-row">
-                      <span>Payable Amount</span>
-                      <strong>{estimatedFee > 0 ? `₹${estimatedFee}` : '—'}</strong>
-                    </div>
-                    {estimatedDistanceKm != null && (
-                      <p className="payment-distance-row">
-                        Distance: {estimatedDistanceKm} km
-                      </p>
-                    )}
-                    {fareBreakdown && (
-                      <p className="payment-fare-rule">
-                        Meter model: ₹{fareBreakdown.baseFare} for first {fareBreakdown.baseDistanceKm} km, then ₹{fareBreakdown.perKmRate}/km.
-                      </p>
-                    )}
-                    {quoteLoading && <p className="payment-quote-loading">Calculating delivery fare...</p>}
-                    {!!quoteError && <p className="payment-quote-error">{quoteError}</p>}
-
-                    <label className="payment-field">
-                      <span>Transaction ID</span>
-                      <input
-                        type="text"
-                        value={paymentTransactionId}
-                        onChange={(e) => setPaymentTransactionId(e.target.value)}
-                        placeholder="Enter UPI transaction/reference ID"
-                      />
-                    </label>
-
-                    <label className="payment-field">
-                      <span>Payment Screenshot</span>
-                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePaymentScreenshotChange} />
-                    </label>
-
-                    {paymentScreenshotPreview && (
-                      <div className="payment-preview-wrap">
-                        <img src={paymentScreenshotPreview} alt="Payment screenshot preview" className="payment-preview" />
-                      </div>
-                    )}
-
-                    <p className="payment-help">
-                      After submission, admin verifies transaction ID and screenshot. Only then delivery becomes available for live dispatch tracking.
-                    </p>
-                  </div>
-                </>
-              )}
-
-              <div className="claim-modal-actions">
-                <button className="btn-cancel" onClick={() => setClaimModal(null)}>
-                  Cancel
-                </button>
-                <button
-                  className="btn-confirm-claim"
-                  onClick={() => handleClaim(claimModal.id)}
-                  disabled={
-                    claimLoading ||
-                    (deliveryMethod === 'platform-delivery' && (
-                      quoteLoading ||
-                      !(estimatedFee > 0) ||
-                      estimatedDistanceKm == null ||
-                      !paymentTransactionId.trim() ||
-                      !paymentScreenshot
-                    ))
-                  }
-                >
-                  {claimLoading ? 'Claiming...' : (
-                    <>
-                      <Heart size={18} />
-                      {deliveryMethod === 'self-pickup' ? 'Claim & Self-Pickup' : `Claim & Request Delivery`}
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <NgoDeliveryClaimModal
+        listing={claimModal}
+        onClose={() => setClaimModal(null)}
+        onClaimed={() => {
+          void fetchData(false);
+        }}
+      />
     </NGOLayout>
   );
 };
