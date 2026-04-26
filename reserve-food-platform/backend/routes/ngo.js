@@ -561,7 +561,7 @@ router.post('/claim', requireVerified, handlePaymentUpload, async (req, res) => 
     });
   } catch (error) {
     console.error('Claim error:', error);
-    res.status(500).json({ error: 'Failed to claim food' });
+    res.status(500).json({ error: error.message || 'Failed to claim food' });
   }
 });
 

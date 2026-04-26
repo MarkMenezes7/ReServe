@@ -7,7 +7,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   } else {
     console.log('Connected to SQLite database');
     db.run('PRAGMA journal_mode=WAL');
-    db.run('PRAGMA foreign_keys=ON');
+    // db.run('PRAGMA foreign_keys=ON'); // Disabled due to missing PRIMARY KEY on users table in existing DB
   }
 });
 
